@@ -177,7 +177,3 @@ function SolutionChecker(customerPlan,vehiclePlan)
 
     # Start service time must be between e_i and f_i
 end
-
-
-include("Filereader.jl")
-customerPlan, vehiclePlan = InitialSolutionBuilder("data/C1_2_1.TXT",1)
