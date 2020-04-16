@@ -36,11 +36,11 @@ function DistanceMatrix(depotCoordinates,customerCoordinates)
     distCustomers = zeros(Float64,C,C)
     for i = 1:C
         x1,y1,x2,y2 = depotCoordinates[1],depotCoordinates[2],customerCoordinates[i,1],customerCoordinates[i,2]
-        distDepot[i] = ((x1-x2)^2 + (y1-y2)^2)^(1/2)
+        distDepot[i] = round(((x1-x2)^2 + (y1-y2)^2)^(1/2),digits = 4)
     end
     for i = 1:C, j = 1:C
         x1,y1,x2,y2 = customerCoordinates[i,1],customerCoordinates[i,2],customerCoordinates[j,1],customerCoordinates[j,2]
-        distCustomers[i,j] = ((x1-x2)^2 + (y1-y2)^2)^(1/2)
+        distCustomers[i,j] = round(((x1-x2)^2 + (y1-y2)^2)^(1/2),digits = 4)
     end
     return distDepot,distCustomers
 end

@@ -1,6 +1,9 @@
 include("Filereader.jl")
-include("Initial\ solution\ builder.jl")
+include("InitialSolution.jl")
+include("HelpFunctions.jl")
 
+instance = "data/C1_2_1.TXT"
 
-customerPlan, vehiclePlan = InitialSolutionBuilder("data/C1_2_1.TXT",1)
-test
+customerPlan, vehiclePlan, unvisitedCustomers = InitialSolutionBuilder(instance,5,5)
+
+println("test")

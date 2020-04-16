@@ -1,3 +1,4 @@
+using Random
 
 function InitializePlans(C,K)
     customerPlan = [[Int32,zeros(Float32,3)] for i = 1:C] # [[[truck],[arrival,service,depart]],...,]
@@ -107,7 +108,8 @@ function PossibleNextLocations(vehiclePlan,unvisitedCustomers,s,Q,depotTimes,cus
     end
 end
 
-function Random(array)
+function ChooseRandom(array,seed)
+    Random.seed!(seed)
     if isempty(array)
         return nothing
     else
@@ -117,11 +119,11 @@ function Random(array)
     end
 end
 
-function NextCustomer(options,possibleLocations, unvisitedCustomers)
+function NextCustomer(options,seed,possibleLocations, unvisitedCustomers)
     if possibleLocations == nothing
         return nothing
     else
-        nextCustomer = Random(possibleLocations[1:min(length(possibleLocations),options)])
+        nextCustomer = ChooseRandom(possibleLocations[1:min(length(possibleLocations),options)],seed)
         return nextCustomer[2]
     end
 end
@@ -139,41 +141,43 @@ function UpdatePlans(s,nextCustomer,unvisitedCustomers,vehiclePlan,customerPlan,
             e_i = 0
             s_i = 0
             t_i = depotTimes[1]
+            customerPlan[nextCustomer][2][2] = t_i + s_i + BetweenTime(i,nextCustomer,s,depotTimes,customerTimes,customerPlan,distDepot,distCustomers)
+            customerPlan[nextCustomer][2][1] = customerPlan[nextCustomer][2][2]
         else
             e_i = customerTimes[i,1]
             s_i = s
             t_i = customerPlan[i][2][2]
+            customerPlan[nextCustomer][2][1] = t_i + s_i + Distance(i,nextCustomer,distDepot,distCustomers)
+            customerPlan[nextCustomer][2][2] = t_i + s_i + BetweenTime(i,nextCustomer,s,depotTimes,customerTimes,customerPlan,distDepot,distCustomers)
         end
         push!(vehiclePlan[CurrentVehicle(vehiclePlan)][2],nextCustomer) # Add customer to route
         vehiclePlan[CurrentVehicle(vehiclePlan)][1] += customerDemand[nextCustomer] # Update capacity
         customerPlan[nextCustomer][1] = CurrentVehicle(vehiclePlan) # Assign truck to customer
-        customerPlan[nextCustomer][2][1] = t_i + s_i + Distance(i,nextCustomer,distDepot,distCustomers)
-        customerPlan[nextCustomer][2][2] = t_i + s_i + BetweenTime(i,nextCustomer,s,depotTimes,customerTimes,customerPlan,distDepot,distCustomers)
         customerPlan[nextCustomer][2][3] = customerPlan[nextCustomer][2][2] + s
         filter!(x -> x != nextCustomer, unvisitedCustomers)
     end
     return unvisitedCustomers,vehiclePlan,customerPlan
 end
 
-function InitialSolutionBuilder(File,Randomization)
+function InitialSolutionBuilder(File,Randomization,seed)
 
     K,Q,C,depotCoordinates,depotTimes,customerCoordinates,customerDemand,customerTimes,s = ReadInstance(File)
     distDepot,distCustomers = DistanceMatrix(depotCoordinates,customerCoordinates)
 
     customerPlan, vehiclePlan, unvisitedCustomers = InitializePlans(C,K)
+    currentVehicle = CurrentVehicle(vehiclePlan)
 
-    while length(unvisitedCustomers) > 0
+    while length(unvisitedCustomers) > 0 && currentVehicle <= K
         possibleLocations = PossibleNextLocations(vehiclePlan,unvisitedCustomers,s,Q,depotTimes,customerTimes,distDepot,distCustomers,customerDemand,customerPlan)
-        nextCustomer = NextCustomer(Randomization,possibleLocations, unvisitedCustomers)
-        unvisitedCustomers,vehiclePlan,customerPlan = UpdatePlans(s,nextCustomer,unvisitedCustomers,vehiclePlan,customerPlan,distDepot,distCustomers,depotTimes,customerTimes,customerDemand)
+        nextCustomer = NextCustomer(Randomization,seed,possibleLocations, unvisitedCustomers)
+        if nextCustomer == nothing && CurrentVehicle(vehiclePlan) == K
+            currentVehicle == (K + 1)
+            push!(vehiclePlan[CurrentVehicle(vehiclePlan)][2],0)
+        else
+            unvisitedCustomers,vehiclePlan,customerPlan = UpdatePlans(s,nextCustomer,unvisitedCustomers,vehiclePlan,customerPlan,distDepot,distCustomers,depotTimes,customerTimes,customerDemand)
+        end
     end
     push!(vehiclePlan[CurrentVehicle(vehiclePlan)][2],0)
 
-    return customerPlan, vehiclePlan
-end
-
-function SolutionChecker(customerPlan,vehiclePlan)
-    # Time between departure customer i and arrival customer j >= Distance(i,j)
-
-    # Start service time must be between e_i and f_i
+    return customerPlan, vehiclePlan, unvisitedCustomers
 end
