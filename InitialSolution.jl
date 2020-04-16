@@ -178,6 +178,5 @@ function InitialSolutionBuilder(File,Randomization,seed)
         end
     end
     push!(vehiclePlan[CurrentVehicle(vehiclePlan)][2],0)
-
     return customerPlan, vehiclePlan, unvisitedCustomers
 end

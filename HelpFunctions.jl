@@ -37,3 +37,11 @@ function SolutionCheck(customerPlan,vehiclePlan,unvisitedCustomers,instance)
     end
     return ((count(x -> x = true,feasibleRoute) == CurrentVehicle(vehiclePlan)) && (length(unvisitedCustomers) == 0))
 end
+
+
+function printPlan(vehiclePlan)
+    for r = 1:length(vehiclePlan)
+        println("______________vehiclePlan_____________")
+        println(r)
+    end
+end
