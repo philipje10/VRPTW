@@ -15,9 +15,7 @@ end
 # t_i = actual service time at customer i
 
 function Distance(i,j,distDepot,distCustomers) # distance from i to j
-    if i == j
-        return 0
-    elseif i == 0
+    if i == 0
         return distDepot[j]
     elseif j == 0
         return distDepot[i]
@@ -147,8 +145,8 @@ function UpdatePlans(s,nextCustomer,unvisitedCustomers,vehiclePlan,customerPlan,
             e_i = customerTimes[i,1]
             s_i = s
             t_i = customerPlan[i][2][2]
-            customerPlan[nextCustomer][2][1] = t_i + s_i + Distance(i,nextCustomer,distDepot,distCustomers)
             customerPlan[nextCustomer][2][2] = t_i + s_i + BetweenTime(i,nextCustomer,s,depotTimes,customerTimes,customerPlan,distDepot,distCustomers)
+            customerPlan[nextCustomer][2][1] = t_i + s_i + Distance(i,nextCustomer,distDepot,distCustomers)
         end
         push!(vehiclePlan[CurrentVehicle(vehiclePlan)][2],nextCustomer) # Add customer to route
         vehiclePlan[CurrentVehicle(vehiclePlan)][1] += customerDemand[nextCustomer] # Update capacity
