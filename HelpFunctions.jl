@@ -50,6 +50,36 @@ function SolutionCheck(customerPlan,vehiclePlan,unvisitedCustomers,instance)
     end
 end
 
+function RouteEvaluation(route,customerPlan,distDepot,distCustomers)
+    distance = 0
+    waitingTime = 0
+    capacity = route[1]
+    for c = 2:length(route[2])
+        i = route[2][c-1]
+        j = route[2][c]
+        distance += Distance(i,j,distDepot,distCustomers)
+        if j != 0
+            waitingTime += (customerPlan[j][2][2] - customerPlan[j][2][1])
+        end
+    end
+    return distance,waitingTime,capacity
+end
+
+function TotalEvaluation(vehiclePlan,customerPlan,distDepot,distCustomers)
+    totalDistance = 0
+    usedVehicles = 0
+    totalWaitingTime = 0
+    for route in vehiclePlan
+        if route[1] != Float32 && route[1] != 0
+            usedVehicles += 1
+            distance,waitingTime,~ = RouteEvaluation(route,customerPlan,distDepot,distCustomers)
+            totalDistance += distance
+            totalWaitingTime += waitingTime
+        end
+    end
+    return totalDistance,usedVehicles,totalWaitingTime
+end
+
 function PlotSolution(vehiclePlan,format,scale,instance)
     ~,~,C,depotCoordinates,~,customerCoordinates,~,~,~ = ReadInstance(instance)
     Drawing(format*scale, format*scale)

@@ -1,18 +1,3 @@
-include("Filereader.jl")
-include("InitialSolution.jl")
-include("HelpFunctions.jl")
-
-instance = "data/C1_2_1.TXT"
-
-K,Q,C,depotCoordinates,depotTimes,customerCoordinates,customerDemand,customerTimes,s = ReadInstance(instance)
-distDepot,distCustomers = DistanceMatrix(depotCoordinates,customerCoordinates)
-
-customerPlan, vehiclePlan, unvisitedCustomers = InitialSolutionBuilder(instance,1,1)
-SolutionCheck(customerPlan,vehiclePlan,unvisitedCustomers,instance)
-
-# PlotSolution(vehiclePlan,160,10,instance)
-
-# 2-opt*
 function FindNeighbours(i,distCustomers,customerPlan,h) # h is number of neighbours
     distanceList = Tuple{Float32,Int32}[]
     for j = 1:C
@@ -29,7 +14,6 @@ function FindNeighbours(i,distCustomers,customerPlan,h) # h is number of neighbo
     end
     return neighbours
 end
-
 
 function TwoOptSwitch(i,j,Q,customerPlan,vehiclePlan,customerDemand) #j = j + 1
     vehicleA = customerPlan[i][1]
@@ -48,23 +32,28 @@ function TwoOptSwitch(i,j,Q,customerPlan,vehiclePlan,customerDemand) #j = j + 1
         cutPointB += 1
     end
 
+    tabuA = (oldRouteA[cutPointA],oldRouteA[cutPointA+1])
+    tabuB = (oldRouteB[cutPointB-1],oldRouteB[cutPointB])
+
     newRouteA = vcat(oldRouteA[1:cutPointA], oldRouteB[cutPointB:end])
     newRouteB = vcat(oldRouteB[1:cutPointB-1], oldRouteA[cutPointA+1:end])
     if length(newRouteA) > 2
         capacityA = sum(customerDemand[i] for i in newRouteA[2:end-1])
     else
+        newRouteA = [0]
         capacityA = 0
     end
     if length(newRouteB) > 2
         capacityB = sum(customerDemand[i] for i in newRouteB[2:end-1])
     else
+        newRouteB = [0]
         capacityB = 0
     end
 
     if capacityA > Q || capacityB > Q
         return false
     else
-        return [([Float32(capacityA),newRouteA],vehicleA),([Float32(capacityB),newRouteB],vehicleB)]
+        return [([Float32(capacityA),newRouteA],vehicleA,tabuA),([Float32(capacityB),newRouteB],vehicleB,tabuB)]
     end
 end
 
@@ -103,21 +92,21 @@ function CreateNewPlans(newRoutes,customerPlan,s,depotTimes,customerTimes,distDe
     return newCustomerPlan
 end
 
-
-# neighbours = FindNeighbours(1,distCustomers,customerPlan,10)
-# newRoutes = TwoOptSwitch(42,170,Q,customerPlan,vehiclePlan,customerDemand)
-# newCustomerPlan = CreateNewPlans(newRoutes,customerPlan,s,depotTimes,customerTimes,distDepot,distCustomers)
-
-tmp = []
-for i = 1:C
-    neighbours = FindNeighbours(i,distCustomers,customerPlan,10)
-    for j in neighbours
-        newRoutes = TwoOptSwitch(i,j,Q,customerPlan,vehiclePlan,customerDemand)
-        newCustomerPlan = CreateNewPlans(newRoutes,customerPlan,s,depotTimes,customerTimes,distDepot,distCustomers)
-        if newCustomerPlan != false
-            push!(tmp,[(i,j),newCustomerPlan])
+function BestTwoOpt(h,s,Q,customerPlan,vehiclePlan,depotTimes,customerTimes,customerDemand,distCustomers,distDepot)
+    potentialChanges = []
+    for i = 1:C
+        neighbours = FindNeighbours(i,distCustomers,customerPlan,h)
+        for j in neighbours
+            newRoutes = TwoOptSwitch(i,j,Q,customerPlan,vehiclePlan,customerDemand)
+            newCustomerPlan = CreateNewPlans(newRoutes,customerPlan,s,depotTimes,customerTimes,distDepot,distCustomers)
+            if newCustomerPlan != false
+                newVehiclePlan = deepcopy(vehiclePlan)
+                newVehiclePlan[newRoutes[1][2]] = newRoutes[1][1]
+                newVehiclePlan[newRoutes[2][2]] = newRoutes[2][1]
+                totalDistance,usedVehicles,totalWaitingTime = TotalEvaluation(newVehiclePlan,newCustomerPlan,distDepot,distCustomers)
+                push!(potentialChanges,(totalDistance,newCustomerPlan,newVehiclePlan))
+            end
         end
     end
+    return sort(potentialChanges)
 end
-
-# To do: Check for empty routes

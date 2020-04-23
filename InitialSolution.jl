@@ -61,7 +61,7 @@ function UnfeasibleTime(i,j,s,depotTimes,customerTimes,customerPlan,distDepot,di
 end
 
 
-function Evaluation(i,j,s,distDepot,distCustomers,depotTimes,customerTimes,customerPlan) # evaluation based on distance, between time, and time till unfeasibility
+function Assessment(i,j,s,distDepot,distCustomers,depotTimes,customerTimes,customerPlan) # Route assessment based on distance, between time, and time till unfeasibility
     return ((1/3) * Distance(i,j,distDepot,distCustomers)
             + (1/3) * BetweenTime(i,j,s,depotTimes,customerTimes,customerPlan,distDepot,distCustomers)
             + (1/3) * UnfeasibleTime(i,j,s,depotTimes,customerTimes,customerPlan,distDepot,distCustomers))
@@ -96,7 +96,7 @@ function PossibleNextLocations(vehiclePlan,unvisitedCustomers,s,Q,depotTimes,cus
     possibleLocations = Tuple{Float32,Int32}[]
     for j in unvisitedCustomers
         if FeasibilityCustomer(i,j,s,Q,depotTimes,customerTimes,customerDemand,customerPlan,vehiclePlan,distDepot,distCustomers)
-            push!(possibleLocations,(Evaluation(i,j,s,distDepot,distCustomers,depotTimes,customerTimes,customerPlan),j))
+            push!(possibleLocations,(Assessment(i,j,s,distDepot,distCustomers,depotTimes,customerTimes,customerPlan),j))
         end
     end
     if isempty(possibleLocations)
