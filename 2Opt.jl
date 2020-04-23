@@ -92,8 +92,11 @@ function CreateNewPlans(newRoutes,customerPlan,s,depotTimes,customerTimes,distDe
     return newCustomerPlan
 end
 
-function BestTwoOpt(h,s,Q,customerPlan,vehiclePlan,depotTimes,customerTimes,customerDemand,distCustomers,distDepot)
-    potentialChanges = []
+function BestTwoOpt(h,tabuList,distanceEvaluation,s,Q,bestSolution,customerPlan,vehiclePlan,depotTimes,customerTimes,customerDemand,distCustomers,distDepot)
+    currentEvaluation = 10^10
+    currentVehiclePlan = nothing
+    currentCustomerPlan = nothing
+    currentTabu = Any[]
     for i = 1:C
         neighbours = FindNeighbours(i,distCustomers,customerPlan,h)
         for j in neighbours
@@ -103,10 +106,35 @@ function BestTwoOpt(h,s,Q,customerPlan,vehiclePlan,depotTimes,customerTimes,cust
                 newVehiclePlan = deepcopy(vehiclePlan)
                 newVehiclePlan[newRoutes[1][2]] = newRoutes[1][1]
                 newVehiclePlan[newRoutes[2][2]] = newRoutes[2][1]
-                totalDistance,usedVehicles,totalWaitingTime = TotalEvaluation(newVehiclePlan,newCustomerPlan,distDepot,distCustomers)
-                push!(potentialChanges,(totalDistance,newCustomerPlan,newVehiclePlan))
+                if distanceEvaluation == true
+                    totalDistance,~,~ = TotalEvaluation(newVehiclePlan,newCustomerPlan,distDepot,distCustomers)
+                    if totalDistance < currentEvaluation && (i,j) ∉ tabuList
+                        currentEvaluation = totalDistance
+                        currentVehiclePlan = newVehiclePlan
+                        currentCustomerPlan = newCustomerPlan
+                        currentTabu = [newRoutes[1][3],newRoutes[2][3]]
+                    elseif totalDistance < currentEvaluation && totalDistance < bestSolution # aspiration level (ignore Tabu list if better than overal best)
+                        currentEvaluation = totalDistance
+                        currentVehiclePlan = newVehiclePlan
+                        currentCustomerPlan = newCustomerPlan
+                        currentTabu = [newRoutes[1][3],newRoutes[2][3]]
+                    end
+                else # else evaluate based on number of vehicles
+                    ~,usedVehicles,~ = TotalEvaluation(newVehiclePlan,newCustomerPlan,distDepot,distCustomers)
+                    if usedVehicles < currentEvaluation && (i,j) ∉ tabuList
+                        currentEvaluation = totalDistance
+                        currentVehiclePlan = newVehiclePlan
+                        currentCustomerPlan = newCustomerPlan
+                        currentTabu = [newRoutes[1][3],newRoutes[2][3]]
+                    elseif usedVehicles < currentEvaluation && usedVehicles < bestSolution # aspiration level (ignore Tabu list if better than overal best)
+                        currentEvaluation = totalDistance
+                        currentVehiclePlan = newVehiclePlan
+                        currentCustomerPlan = newCustomerPlan
+                        currentTabu = [newRoutes[1][3],newRoutes[2][3]]
+                    end
+                end
             end
         end
     end
-    return sort(potentialChanges)
+    return currentVehiclePlan,currentCustomerPlan,currentTabu,currentTabu
 end
