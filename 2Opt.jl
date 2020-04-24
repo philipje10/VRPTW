@@ -5,7 +5,6 @@ function TwoOptSwitch(i,j,Q,customerPlan,vehiclePlan,customerDemand) #j = j + 1
     oldRouteB = vehiclePlan[vehicleB][2]
     cutPointA = Int32(1)
     cutPointB = Int32(1)
-    c = nothing
 
     while oldRouteA[cutPointA] != i
         cutPointA += 1

@@ -20,7 +20,7 @@ time_limit = 180
 startTime = time_ns()
 while round((time_ns()-startTime)/1e9,digits=3) < time_limit  # run while loop for 10 sec.
 
-    global vehiclePlan,customerPlan,currentTabu,currentEvaluation = BestTwoOpt(20,tabuList,true,s,Q,bestSolution,customerPlan,vehiclePlan,depotTimes,customerTimes,customerDemand,distCustomers,distDepot)
+    global vehiclePlan,customerPlan,currentTabu,currentEvaluation = BestTwoOpt(15,tabuList,true,s,Q,bestSolution,customerPlan,vehiclePlan,depotTimes,customerTimes,customerDemand,distCustomers,distDepot)
     global tabuList = vcat(tabuList[3:end],currentTabu)
 
     if currentEvaluation < bestSolution
