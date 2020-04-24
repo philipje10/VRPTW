@@ -50,6 +50,60 @@ function SolutionCheck(customerPlan,vehiclePlan,unvisitedCustomers,instance)
     end
 end
 
+function FindNeighbours(i,distCustomers,customerPlan,h) # h is number of neighbours
+    distanceList = [(Float32(0.0),Int32(0)) for j = 1:(C-1)]
+    for j = 1:(C-1)
+        distanceList[j] = (distCustomers[i,j],j)
+    end
+    distanceList = sort(distanceList)
+    neighbours = zeros(Int32,h)
+    j = Int32(1)
+    index = 1
+    while index <= h
+        if customerPlan[distanceList[j][2]][1] != customerPlan[i][1]
+            neighbours[index] = distanceList[j][2]
+            index += 1
+        end
+        j += 1
+    end
+    return neighbours
+end
+
+function CreateNewPlans(newRoutes,customerPlan,s,depotTimes,customerTimes,distDepot,distCustomers)
+    newCustomerPlan = deepcopy(customerPlan)
+    if newRoutes == false
+        return false
+    else
+        for r in newRoutes
+            route = r[1]
+            vehicle = r[2]
+            for c = 2:(length(route[2])-1)
+                i = route[2][c-1]
+                j = route[2][c]
+                if i == 0
+                    e_i = 0
+                    s_i = 0
+                    t_i = depotTimes[1]
+                    newCustomerPlan[j][2][2] = t_i + s_i + BetweenTime(i,j,s,depotTimes,customerTimes,newCustomerPlan,distDepot,distCustomers)
+                    newCustomerPlan[j][2][1] = newCustomerPlan[j][2][2]
+                else
+                    e_i = customerTimes[i,1]
+                    s_i = s
+                    t_i = newCustomerPlan[i][2][2]
+                    newCustomerPlan[j][2][1] = t_i + s_i + Distance(i,j,distDepot,distCustomers)
+                    newCustomerPlan[j][2][2] = t_i + s_i + BetweenTime(i,j,s,depotTimes,customerTimes,newCustomerPlan,distDepot,distCustomers)
+                end
+                newCustomerPlan[j][1] = vehicle # Assign truck to customer
+                newCustomerPlan[j][2][3] = newCustomerPlan[j][2][2] + s
+                if newCustomerPlan[j][2][2] > customerTimes[j,2] || newCustomerPlan[j][2][2] < customerTimes[j,1]
+                    return false
+                end
+            end
+        end
+    end
+    return newCustomerPlan
+end
+
 function RouteEvaluation(route,customerPlan,distDepot,distCustomers)
     distance = 0
     waitingTime = 0
@@ -77,7 +131,7 @@ function TotalEvaluation(vehiclePlan,customerPlan,distDepot,distCustomers)
             totalWaitingTime += waitingTime
         end
     end
-    return totalDistance,usedVehicles,totalWaitingTime
+    return round(totalDistance,digits = 4),usedVehicles,round(totalWaitingTime,digits = 4)
 end
 
 function PlotSolution(vehiclePlan,format,scale,instance)
