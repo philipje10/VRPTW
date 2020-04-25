@@ -74,12 +74,14 @@ function BestTwoOpt(h,tabuList,distanceEvaluation,s,Q,bestSolution,customerPlan,
                         currentEvaluation = usedVehicles
                         currentVehiclePlan = newVehiclePlan
                         currentCustomerPlan = newCustomerPlan
-                        currentTabu = [newRoutes[1][3],newRoutes[2][3]]
+                        currentTabu[1] = newRoutes[1][3]
+                        currentTabu[2] = newRoutes[2][3]
                     elseif usedVehicles < currentEvaluation && usedVehicles < bestSolution # aspiration level (ignore Tabu list if better than overal best)
                         currentEvaluation = usedVehicles
                         currentVehiclePlan = newVehiclePlan
                         currentCustomerPlan = newCustomerPlan
-                        currentTabu = [newRoutes[1][3],newRoutes[2][3]]
+                        currentTabu[1] = newRoutes[1][3]
+                        currentTabu[2] = newRoutes[2][3]
                     end
                 end
             end
@@ -87,4 +89,25 @@ function BestTwoOpt(h,tabuList,distanceEvaluation,s,Q,bestSolution,customerPlan,
     end
     println(currentEvaluation)
     return currentVehiclePlan,currentCustomerPlan,currentTabu,currentEvaluation
+end
+
+function RunTwoOpt(h,k,I,vehiclePlan,customerPlan)
+    bestSolution = TotalEvaluation(vehiclePlan,customerPlan,distDepot,distCustomers)[1]
+    tabuList = [(1000,1000) for i = 1:(k*2)] # initialize tabu list
+
+    i = 0
+    while i < I
+        vehiclePlan,customerPlan,currentTabu,currentEvaluation = BestTwoOpt(h,tabuList,true,s,Q,bestSolution,customerPlan,vehiclePlan,depotTimes,customerTimes,customerDemand,distCustomers,distDepot)
+        tabuList = vcat(tabuList[3:end],currentTabu)
+
+        if currentEvaluation < bestSolution
+            i = 0
+            bestSolution = currentEvaluation
+            bestVehiclePlan = vehiclePlan
+            bestCustomerPlan = customerPlan
+        else
+            i += 1
+        end
+    end
+    return bestSolution,bestVehiclePlan,bestCustomerPlan
 end

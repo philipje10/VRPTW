@@ -50,9 +50,73 @@ function OrOptSwitch(i,j,maxLength,Q,customerPlan,vehiclePlan,customerDemand)
     return newRoutes
 end
 
+function BestOrOpt(h,tabuList,distanceEvaluation,maxLength,s,Q,bestSolution,customerPlan,vehiclePlan,depotTimes,customerTimes,customerDemand,distCustomers,distDepot)
+    currentEvaluation = 10^10
+    currentVehiclePlan = vehiclePlan
+    currentCustomerPlan = customerPlan
+    currentTabu = [(1000,1000)]
+    for i = 1:C
+        neighbours = FindNeighbours(i,distCustomers,customerPlan,h)
+        for j in neighbours
+            newRoutes = OrOptSwitch(i,j,maxLength,Q,customerPlan,vehiclePlan,customerDemand)
+            for route in newRoutes
+                newCustomerPlan = CreateNewPlans(route,customerPlan,s,depotTimes,customerTimes,distDepot,distCustomers)
+                if newCustomerPlan != false
+                    newVehiclePlan = deepcopy(vehiclePlan)
+                    newVehiclePlan[route[1][2]] = route[1][1]
+                    newVehiclePlan[route[2][2]] = route[2][1]
+                    if distanceEvaluation == true
+                        totalDistance,~,~ = TotalEvaluation(newVehiclePlan,newCustomerPlan,distDepot,distCustomers)
+                        if totalDistance < currentEvaluation && (i,j) ∉ tabuList
+                            currentEvaluation = totalDistance
+                            currentVehiclePlan = newVehiclePlan
+                            currentCustomerPlan = newCustomerPlan
+                            currentTabu[1] = route[1][3]
+                        elseif totalDistance < currentEvaluation && totalDistance < bestSolution # aspiration level (ignore Tabu list if better than overal best)
+                            currentEvaluation = totalDistance
+                            currentVehiclePlan = newVehiclePlan
+                            currentCustomerPlan = newCustomerPlan
+                            currentTabu[1] = route[1][3]
+                        end
+                    else # else evaluate based on number of vehicles
+                        ~,usedVehicles,~ = TotalEvaluation(newVehiclePlan,newCustomerPlan,distDepot,distCustomers)
+                        if usedVehicles < currentEvaluation && (i,j) ∉ tabuList
+                            currentEvaluation = usedVehicles
+                            currentVehiclePlan = newVehiclePlan
+                            currentCustomerPlan = newCustomerPlan
+                            currentTabu[1] = route[1][3]
+                        elseif usedVehicles < currentEvaluation && usedVehicles < bestSolution # aspiration level (ignore Tabu list if better than overal best)
+                            currentEvaluation = usedVehicles
+                            currentVehiclePlan = newVehiclePlan
+                            currentCustomerPlan = newCustomerPlan
+                            currentTabu[1] = route[1][3]
+                        end
+                    end
+                end
+            end
+        end
+    end
+    println(currentEvaluation)
+    return currentVehiclePlan,currentCustomerPlan,currentTabu,currentEvaluation
+end
 
-neighbours = FindNeighbours(1,distCustomers,customerPlan,15)
-i = 132
-j = 9
-maxLength = 3
-newRoutes = OrOptSwitch(i,j,maxLength,Q,customerPlan,vehiclePlan,customerDemand)
+function RunOrOpt(h,k,I,maxLength,vehiclePlan,customerPlan)
+    bestSolution = TotalEvaluation(vehiclePlan,customerPlan,distDepot,distCustomers)[1]
+    tabuList = [(1000,1000) for i = 1:k] # initialize tabu list
+
+    i = 0
+    while i < I
+        vehiclePlan,customerPlan,currentTabu,currentEvaluation = BestOrOpt(h,tabuList,true,maxLength,s,Q,bestSolution,customerPlan,vehiclePlan,depotTimes,customerTimes,customerDemand,distCustomers,distDepot)
+        tabuList = vcat(tabuList[2:end],currentTabu)
+
+        if currentEvaluation < bestSolution
+            i = 0
+            bestSolution = currentEvaluation
+            bestVehiclePlan = vehiclePlan
+            bestCustomerPlan = customerPlan
+        else
+            i += 1
+        end
+    end
+    return bestSolution,bestVehiclePlan,bestCustomerPlan
+end
