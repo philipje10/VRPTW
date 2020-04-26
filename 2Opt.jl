@@ -91,23 +91,23 @@ function BestTwoOpt(h,tabuList,distanceEvaluation,s,Q,bestSolution,customerPlan,
     return currentVehiclePlan,currentCustomerPlan,currentTabu,currentEvaluation
 end
 
-function RunTwoOpt(h,k,I,vehiclePlan,customerPlan)
-    bestSolution = TotalEvaluation(vehiclePlan,customerPlan,distDepot,distCustomers)[1]
+function RunTwoOpt(h,k,I,vehiclePlan,customerPlan,bestVehiclePlan,bestCustomerPlan)
+    bestEvaluation = TotalEvaluation(bestVehiclePlan,bestCustomerPlan,distDepot,distCustomers)[1]
     tabuList = [(1000,1000) for i = 1:(k*2)] # initialize tabu list
 
     i = 0
     while i < I
-        vehiclePlan,customerPlan,currentTabu,currentEvaluation = BestTwoOpt(h,tabuList,true,s,Q,bestSolution,customerPlan,vehiclePlan,depotTimes,customerTimes,customerDemand,distCustomers,distDepot)
+        vehiclePlan,customerPlan,currentTabu,evaluation = BestTwoOpt(h,tabuList,true,s,Q,bestEvaluation,customerPlan,vehiclePlan,depotTimes,customerTimes,customerDemand,distCustomers,distDepot)
         tabuList = vcat(tabuList[3:end],currentTabu)
 
-        if currentEvaluation < bestSolution
+        if evaluation < bestEvaluation
             i = 0
-            bestSolution = currentEvaluation
+            bestEvaluation = evaluation
             bestVehiclePlan = vehiclePlan
             bestCustomerPlan = customerPlan
         else
             i += 1
         end
     end
-    return bestSolution,bestVehiclePlan,bestCustomerPlan
+    return vehiclePlan,customerPlan,bestVehiclePlan,bestCustomerPlan
 end

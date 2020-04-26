@@ -100,23 +100,23 @@ function BestOrOpt(h,tabuList,distanceEvaluation,maxLength,s,Q,bestSolution,cust
     return currentVehiclePlan,currentCustomerPlan,currentTabu,currentEvaluation
 end
 
-function RunOrOpt(h,k,I,maxLength,vehiclePlan,customerPlan)
-    bestSolution = TotalEvaluation(vehiclePlan,customerPlan,distDepot,distCustomers)[1]
+function RunOrOpt(h,k,I,maxLength,vehiclePlan,customerPlan,bestVehiclePlan,bestCustomerPlan)
+    bestEvaluation = TotalEvaluation(bestVehiclePlan,bestCustomerPlan,distDepot,distCustomers)[1]
     tabuList = [(1000,1000) for i = 1:k] # initialize tabu list
 
     i = 0
     while i < I
-        vehiclePlan,customerPlan,currentTabu,currentEvaluation = BestOrOpt(h,tabuList,true,maxLength,s,Q,bestSolution,customerPlan,vehiclePlan,depotTimes,customerTimes,customerDemand,distCustomers,distDepot)
+        vehiclePlan,customerPlan,currentTabu,evaluation = BestOrOpt(h,tabuList,true,maxLength,s,Q,bestEvaluation,customerPlan,vehiclePlan,depotTimes,customerTimes,customerDemand,distCustomers,distDepot)
         tabuList = vcat(tabuList[2:end],currentTabu)
 
-        if currentEvaluation < bestSolution
+        if evaluation < bestEvaluation
             i = 0
-            bestSolution = currentEvaluation
+            bestEvaluation = evaluation
             bestVehiclePlan = vehiclePlan
             bestCustomerPlan = customerPlan
         else
             i += 1
         end
     end
-    return bestSolution,bestVehiclePlan,bestCustomerPlan
+    return vehiclePlan,customerPlan,bestVehiclePlan,bestCustomerPlan
 end

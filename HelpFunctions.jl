@@ -1,4 +1,5 @@
 using Luxor
+using DataFrames
 
 function RouteCheck(Route,Q,depotCoordinates,depotTimes,customerCoordinates,customerDemand,customerTimes,distDepot,distCustomers)
     routeFeasibility = true
@@ -177,4 +178,59 @@ function PlotSolution(vehiclePlan,format,scale,instance)
 
     finish()
     return preview()
+end
+
+function PrintSolution(vehiclePlan,customerPlan,distDepot,distCustomers,depotTimes,customerTimes)
+
+    r = 0
+    for route in vehiclePlan
+        if route[1] != Float32 && route[1] != 0
+            df = DataFrame(Loc = Int[], Arr = Any[], Wait = Any[], Serv = Any[], Dep = Any[], Open = Int[], Close = Int[])
+            r += 1
+            Loc = nothing
+            Arr = nothing
+            Serv = nothing
+            Wait = nothing
+            Dep = nothing
+            Open = nothing
+            Close = nothing
+            distance,waitingTime,capacity = RouteEvaluation(route,customerPlan,distDepot,distCustomers)
+            println("\n")
+            println("Route: ",r)
+            println("-----------")
+            println("Total distance: ",round(distance,digits = 2))
+            println("Total waiting time: ", round(waitingTime,digits = 2))
+            println("Capacity utilization: ",capacity,"\n")
+            for c = 1:length(route[2])
+                i = route[2][c]
+                if c == 1
+                    Loc = 0
+                    Arr = "-"
+                    Serv = "-"
+                    Wait = "-"
+                    Dep = abs(round(customerPlan[route[2][2]][2][1]-distDepot[route[2][2]],digits = 2))
+                    Open = depotTimes[1]
+                    Close = depotTimes[2]
+                elseif c == length(route[2])
+                    Loc = 0
+                    Arr = abs(round(customerPlan[route[2][length(route[2])-1]][2][3]+distDepot[route[2][length(route[2])-1]],digits = 2))
+                    Serv = "-"
+                    Wait = "-"
+                    Dep = "-"
+                    Open = depotTimes[1]
+                    Close = depotTimes[2]
+                else
+                    Loc = i
+                    Arr = round(customerPlan[i][2][1],digits = 2)
+                    Serv = round(customerPlan[i][2][2],digits = 2)
+                    Wait = round(Serv - Arr,digits = 2)
+                    Dep = round(customerPlan[i][2][3],digits = 2)
+                    Open = customerTimes[i,1]
+                    Close = customerTimes[i,2]
+                end
+                push!(df,[Loc,Arr,Wait,Serv,Dep,Open,Close])
+            end
+            print(df,"\n")
+        end
+    end
 end
