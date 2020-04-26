@@ -16,9 +16,17 @@ end
 
 function Distance(i,j,distDepot,distCustomers) # distance from i to j
     if i == 0
-        return distDepot[j]
+        if j == 0
+            return 0
+        else
+            return distDepot[j]
+        end
     elseif j == 0
-        return distDepot[i]
+        if i == 0
+            return 0
+        else
+            return distDepot[i]
+        end
     else
         return distCustomers[i,j]
     end

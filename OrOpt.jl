@@ -9,11 +9,14 @@ K,Q,C,depotCoordinates,depotTimes,customerCoordinates,customerDemand,customerTim
 distDepot,distCustomers = DistanceMatrix(depotCoordinates,customerCoordinates)
 customerPlan, vehiclePlan, unvisitedCustomers = InitialSolutionBuilder(instance,5,1)
 
-function OrOptSwitch(i,j,maxLength,Q,customerPlan,vehiclePlan,customerDemand)
+function OrOptSwitch(i,j,maxLength,Q,customerPlan,vehiclePlan,customerDemand,distDepot,distCustomers)
+    deltaVehicles = 0
+    deltaDistance = 0
     vehicleA = customerPlan[i][1]
     vehicleB = customerPlan[j][1]
     oldRouteA = vehiclePlan[vehicleA][2]
     oldRouteB = vehiclePlan[vehicleB][2]
+    capacityB = vehiclePlan[vehicleB][1]
     cutPointA = Int32(1)
     cutPointB = Int32(1)
 
@@ -31,20 +34,30 @@ function OrOptSwitch(i,j,maxLength,Q,customerPlan,vehiclePlan,customerDemand)
     newRoutes = Any[]
 
     for p = 1:numberOfCombinations
-        newRouteA = vcat(oldRouteA[1:cutPointA - 1], oldRouteA[cutPointA + p:end])
-        newRouteB = vcat(oldRouteB[1:cutPointB], oldRouteA[cutPointA:cutPointA + p - 1] ,oldRouteB[cutPointB+1:end])
+        deltaVehicles = 0
+        deltaDistance = 0
 
-        if length(newRouteA) > 2
-            capacityA = sum(customerDemand[i] for i in newRouteA[2:end-1])
-        else
-            newRouteA = [0]
-            capacityA = 0
-        end
-        capacityB = sum(customerDemand[i] for i in newRouteB[2:end-1])
-        if capacityA > Q || capacityB > Q
+        swappedLocations = oldRouteA[cutPointA:cutPointA + p - 1]
+        capacityB += sum(customerDemand[i] for i in swappedLocations)
+        if capacityB > Q
             push!(newRoutes, false)
         else
-            push!(newRoutes,[([Float32(capacityA),newRouteA],vehicleA,tabu),([Float32(capacityB),newRouteB],vehicleB,tabu)])
+            newRouteA = vcat(oldRouteA[1:cutPointA - 1], oldRouteA[cutPointA + p:end])
+            newRouteB = vcat(oldRouteB[1:cutPointB], swappedLocations ,oldRouteB[cutPointB+1:end])
+
+            deltaLocationsA = oldRouteA[cutPointA - 1:cutPointA + p]
+            deltaLocationsB = vcat(oldRouteB[cutPointB],swappedLocations,oldRouteB[cutPointB+1])
+            deltaDistanceA = Distance(oldRouteA[cutPointA - 1],oldRouteA[cutPointA + p],distDepot,distCustomers) - sum(Distance(deltaLocationsA[i-1],deltaLocationsA[i],distDepot,distCustomers) for i = 2:length(deltaLocationsA))
+            deltaDistanceB = sum(Distance(deltaLocationsB[i-1],deltaLocationsB[i],distDepot,distCustomers) for i = 2:length(deltaLocationsB)) - Distance(oldRouteB[cutPointB],oldRouteB[cutPointB+1],distDepot,distCustomers)
+            deltaDistance = deltaDistanceA + deltaDistanceB
+            if length(newRouteA) > 2
+                capacityA = sum(customerDemand[i] for i in newRouteA[2:end-1])
+            else
+                newRouteA = [0]
+                capacityA = 0
+                deltaVehicles = -1
+            end
+            push!(newRoutes,[([Float32(capacityA),newRouteA],vehicleA,tabu,deltaVehicles,deltaDistance),([Float32(capacityB),newRouteB],vehicleB,tabu,deltaVehicles,deltaDistance)])
         end
     end
     return newRoutes
@@ -52,13 +65,14 @@ end
 
 function BestOrOpt(h,tabuList,distanceEvaluation,maxLength,s,Q,bestSolution,customerPlan,vehiclePlan,depotTimes,customerTimes,customerDemand,distCustomers,distDepot)
     currentEvaluation = 10^10
+    originalDistance,originalVehicles,~ = TotalEvaluation(vehiclePlan,customerPlan,distDepot,distCustomers)
     currentVehiclePlan = vehiclePlan
     currentCustomerPlan = customerPlan
     currentTabu = [(1000,1000)]
     for i = 1:C
         neighbours = FindNeighbours(i,distCustomers,customerPlan,h)
         for j in neighbours
-            newRoutes = OrOptSwitch(i,j,maxLength,Q,customerPlan,vehiclePlan,customerDemand)
+            newRoutes = OrOptSwitch(i,j,maxLength,Q,customerPlan,vehiclePlan,customerDemand,distDepot,distCustomers)
             for route in newRoutes
                 newCustomerPlan = CreateNewPlans(route,customerPlan,s,depotTimes,customerTimes,distDepot,distCustomers)
                 if newCustomerPlan != false
@@ -66,7 +80,8 @@ function BestOrOpt(h,tabuList,distanceEvaluation,maxLength,s,Q,bestSolution,cust
                     newVehiclePlan[route[1][2]] = route[1][1]
                     newVehiclePlan[route[2][2]] = route[2][1]
                     if distanceEvaluation == true
-                        totalDistance,~,~ = TotalEvaluation(newVehiclePlan,newCustomerPlan,distDepot,distCustomers)
+                        # totalDistance,~,~ = TotalEvaluation(newVehiclePlan,newCustomerPlan,distDepot,distCustomers)
+                        totalDistance = originalDistance + route[1][5]
                         if totalDistance < currentEvaluation && (i,j) ∉ tabuList
                             currentEvaluation = totalDistance
                             currentVehiclePlan = newVehiclePlan
@@ -79,7 +94,8 @@ function BestOrOpt(h,tabuList,distanceEvaluation,maxLength,s,Q,bestSolution,cust
                             currentTabu[1] = route[1][3]
                         end
                     else # else evaluate based on number of vehicles
-                        ~,usedVehicles,~ = TotalEvaluation(newVehiclePlan,newCustomerPlan,distDepot,distCustomers)
+                        # ~,usedVehicles,~ = TotalEvaluation(newVehiclePlan,newCustomerPlan,distDepot,distCustomers)
+                        usedVehicles = originalVehicles + route[1][4]
                         if usedVehicles < currentEvaluation && (i,j) ∉ tabuList
                             currentEvaluation = usedVehicles
                             currentVehiclePlan = newVehiclePlan

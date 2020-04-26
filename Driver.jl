@@ -19,12 +19,13 @@ bestCustomerPlan = customerPlan
 
 time_limit = 10
 startTime = time_ns()
-while round((time_ns()-startTime)/1e9,digits=3) < time_limit  # run while loop for 10 sec.
+while round((time_ns()-startTime)/1e9,digits=3) < time_limit  # run while loop for t sec.
 
-    global vehiclePlan,customerPlan,bestVehiclePlan,bestCustomerPlan = RunTwoOpt(15,5,15,vehiclePlan,customerPlan,bestVehiclePlan,bestCustomerPlan)
-    global vehiclePlan,customerPlan,bestVehiclePlan,bestCustomerPlan = RunOrOpt(15,5,15,1,vehiclePlan,customerPlan,bestVehiclePlan,bestCustomerPlan)
+    global vehiclePlan,customerPlan,bestVehiclePlan,bestCustomerPlan = RunTwoOpt(15,15,15,vehiclePlan,customerPlan,bestVehiclePlan,bestCustomerPlan)
+    global vehiclePlan,customerPlan,bestVehiclePlan,bestCustomerPlan = RunOrOpt(15,15,15,2,vehiclePlan,customerPlan,bestVehiclePlan,bestCustomerPlan)
 
 end
+println((time_ns() - startTime)/1e9)
 
 PlotSolution(bestVehiclePlan,160,10,instance)
 TotalEvaluation(bestVehiclePlan,bestCustomerPlan,distDepot,distCustomers)
