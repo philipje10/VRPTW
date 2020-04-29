@@ -55,7 +55,7 @@ function OrOptSwitch(i,j,maxLength,Q,customerPlan,vehiclePlan,customerDemand,dis
             else
                 newRouteA = [0]
                 capacityA = 0
-                deltaVehicles = -1
+                deltaVehicles += -1
             end
             push!(newRoutes,[([Float32(capacityA),newRouteA],vehicleA,tabu,deltaVehicles,deltaDistance),([Float32(capacityB),newRouteB],vehicleB,tabu,deltaVehicles,deltaDistance)])
         end
@@ -81,7 +81,7 @@ function BestOrOpt(h,tabuList,distanceEvaluation,maxLength,s,Q,bestSolution,cust
                     newVehiclePlan[route[2][2]] = route[2][1]
                     if distanceEvaluation == true
                         # totalDistance,~,~ = TotalEvaluation(newVehiclePlan,newCustomerPlan,distDepot,distCustomers)
-                        totalDistance = originalDistance + route[1][5]
+                        totalDistance = originalDistance + route[1][5] # Delta evaluation
                         if totalDistance < currentEvaluation && (i,j) ∉ tabuList
                             currentEvaluation = totalDistance
                             currentVehiclePlan = newVehiclePlan
@@ -116,9 +116,8 @@ function BestOrOpt(h,tabuList,distanceEvaluation,maxLength,s,Q,bestSolution,cust
     return currentVehiclePlan,currentCustomerPlan,currentTabu,currentEvaluation
 end
 
-function RunOrOpt(h,k,I,maxLength,vehiclePlan,customerPlan,bestVehiclePlan,bestCustomerPlan)
+function RunOrOpt(h,k,I,maxLength,vehiclePlan,customerPlan,bestVehiclePlan,bestCustomerPlan,tabuList)
     bestEvaluation = TotalEvaluation(bestVehiclePlan,bestCustomerPlan,distDepot,distCustomers)[1]
-    tabuList = [(1000,1000) for i = 1:k] # initialize tabu list
 
     i = 0
     while i < I
@@ -134,5 +133,5 @@ function RunOrOpt(h,k,I,maxLength,vehiclePlan,customerPlan,bestVehiclePlan,bestC
             i += 1
         end
     end
-    return vehiclePlan,customerPlan,bestVehiclePlan,bestCustomerPlan
+    return vehiclePlan,customerPlan,bestVehiclePlan,bestCustomerPlan,tabuList
 end
