@@ -137,6 +137,16 @@ function TotalEvaluation(vehiclePlan,customerPlan,distDepot,distCustomers)
     return round(totalDistance,digits = 4),usedVehicles,round(totalWaitingTime,digits = 4)
 end
 
+function UsedVehicles(vehiclePlan)
+    usedVehicles = 0
+    for route in vehiclePlan
+        if route[1] != Float32 && route[1] != 0
+            usedVehicles += 1
+        end
+    end
+    return usedVehicles
+end
+
 function PlotSolution(vehiclePlan,format,scale,instance)
     ~,~,C,depotCoordinates,~,customerCoordinates,~,~,~ = ReadInstance(instance)
     Drawing(format*scale, format*scale)

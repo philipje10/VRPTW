@@ -57,14 +57,13 @@ function MinimizeVehicles(h,s,Q,customerPlan,vehiclePlan,depotTimes,customerTime
                             newVehiclePlan = deepcopy(vehiclePlan)
                             newVehiclePlan[route[1][2]] = route[1][1]
                             newVehiclePlan[route[2][2]] = route[2][1]
-                            println("random move")
+                            println("random move","::",i,"-",j)
                             return newVehiclePlan,newCustomerPlan
                         end
                     end
                 end
             end
         end
-        return false,false
     else
         for i in residuals
             neighbours = shuffle!(FindNeighbours(i,distCustomers,customerPlan,h))
@@ -76,7 +75,7 @@ function MinimizeVehicles(h,s,Q,customerPlan,vehiclePlan,depotTimes,customerTime
                         newVehiclePlan = deepcopy(vehiclePlan)
                         newVehiclePlan[newRoutes[1][2]] = newRoutes[1][1]
                         newVehiclePlan[newRoutes[2][2]] = newRoutes[2][1]
-                        println("random move")
+                        println("random move","::",i,"-",j)
                         return newVehiclePlan,newCustomerPlan
                     end
                 end
