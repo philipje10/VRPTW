@@ -52,15 +52,17 @@ function SolutionCheck(customerPlan,vehiclePlan,unvisitedCustomers,instance)
 end
 
 function FindNeighbours(i,distCustomers,customerPlan,h) # h is number of neighbours
-    distanceList = [(Float32(0.0),Int32(0)) for j = 1:(C-1)]
-    for j = 1:(C-1)
+    C = length(customerPlan)
+    distanceList = [(Float32(0.0),Int32(0)) for j = 1:C]
+    for j = 1:C
         distanceList[j] = (distCustomers[i,j],j)
     end
+    m = length(vehiclePlan[customerPlan[i][1]][2])-2 # Minus two times the depot
     distanceList = sort(distanceList)
-    neighbours = zeros(Int32,h)
+    neighbours = zeros(Int32,min(h,C-m))
     j = Int32(1)
-    index = 1
-    while index <= h
+    index = Int32(1)
+    while j <= C && index <= h
         if customerPlan[distanceList[j][2]][1] != customerPlan[i][1]
             neighbours[index] = distanceList[j][2]
             index += 1

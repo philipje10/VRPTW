@@ -55,17 +55,16 @@ function OrOptSwitch(i,j,maxLength,Q,customerPlan,vehiclePlan,customerDemand,dis
             else
                 newRouteA = [0]
                 capacityA = 0
-                deltaVehicles += -1
             end
-            push!(newRoutes,[([Float32(capacityA),newRouteA],vehicleA,tabu,deltaVehicles,deltaDistance),([Float32(capacityB),newRouteB],vehicleB,tabu,deltaVehicles,deltaDistance)])
+            push!(newRoutes,[([Float32(capacityA),newRouteA],vehicleA,tabu,deltaDistance),([Float32(capacityB),newRouteB],vehicleB,tabu,deltaDistance)])
         end
     end
     return newRoutes
 end
 
-function BestOrOpt(h,tabuList,distanceEvaluation,maxLength,s,Q,bestSolution,customerPlan,vehiclePlan,depotTimes,customerTimes,customerDemand,distCustomers,distDepot)
+function BestOrOpt(h,tabuList,maxLength,s,Q,bestSolution,customerPlan,vehiclePlan,depotTimes,customerTimes,customerDemand,distCustomers,distDepot)
     currentEvaluation = 10^10
-    originalDistance,originalVehicles,~ = TotalEvaluation(vehiclePlan,customerPlan,distDepot,distCustomers)
+    originalDistance,~,~ = TotalEvaluation(vehiclePlan,customerPlan,distDepot,distCustomers)
     currentVehiclePlan = vehiclePlan
     currentCustomerPlan = customerPlan
     currentTabu = [(1000,1000)]
@@ -79,34 +78,18 @@ function BestOrOpt(h,tabuList,distanceEvaluation,maxLength,s,Q,bestSolution,cust
                     newVehiclePlan = deepcopy(vehiclePlan)
                     newVehiclePlan[route[1][2]] = route[1][1]
                     newVehiclePlan[route[2][2]] = route[2][1]
-                    if distanceEvaluation == true
-                        # totalDistance,~,~ = TotalEvaluation(newVehiclePlan,newCustomerPlan,distDepot,distCustomers)
-                        totalDistance = originalDistance + route[1][5] # Delta evaluation
-                        if totalDistance < currentEvaluation && (i,j) ∉ tabuList
-                            currentEvaluation = totalDistance
-                            currentVehiclePlan = newVehiclePlan
-                            currentCustomerPlan = newCustomerPlan
-                            currentTabu[1] = route[1][3]
-                        elseif totalDistance < currentEvaluation && totalDistance < bestSolution # aspiration level (ignore Tabu list if better than overal best)
-                            currentEvaluation = totalDistance
-                            currentVehiclePlan = newVehiclePlan
-                            currentCustomerPlan = newCustomerPlan
-                            currentTabu[1] = route[1][3]
-                        end
-                    else # else evaluate based on number of vehicles
-                        # ~,usedVehicles,~ = TotalEvaluation(newVehiclePlan,newCustomerPlan,distDepot,distCustomers)
-                        usedVehicles = originalVehicles + route[1][4]
-                        if usedVehicles < currentEvaluation && (i,j) ∉ tabuList
-                            currentEvaluation = usedVehicles
-                            currentVehiclePlan = newVehiclePlan
-                            currentCustomerPlan = newCustomerPlan
-                            currentTabu[1] = route[1][3]
-                        elseif usedVehicles < currentEvaluation && usedVehicles < bestSolution # aspiration level (ignore Tabu list if better than overal best)
-                            currentEvaluation = usedVehicles
-                            currentVehiclePlan = newVehiclePlan
-                            currentCustomerPlan = newCustomerPlan
-                            currentTabu[1] = route[1][3]
-                        end
+                    # totalDistance,~,~ = TotalEvaluation(newVehiclePlan,newCustomerPlan,distDepot,distCustomers)
+                    totalDistance = originalDistance + route[1][4] # Delta evaluation
+                    if totalDistance < currentEvaluation && (i,j) ∉ tabuList
+                        currentEvaluation = totalDistance
+                        currentVehiclePlan = newVehiclePlan
+                        currentCustomerPlan = newCustomerPlan
+                        currentTabu[1] = route[1][3]
+                    elseif totalDistance < currentEvaluation && totalDistance < bestSolution # aspiration level (ignore Tabu list if better than overal best)
+                        currentEvaluation = totalDistance
+                        currentVehiclePlan = newVehiclePlan
+                        currentCustomerPlan = newCustomerPlan
+                        currentTabu[1] = route[1][3]
                     end
                 end
             end
@@ -121,7 +104,7 @@ function RunOrOpt(h,k,I,maxLength,vehiclePlan,customerPlan,bestVehiclePlan,bestC
 
     i = 0
     while i < I
-        vehiclePlan,customerPlan,currentTabu,evaluation = BestOrOpt(h,tabuList,true,maxLength,s,Q,bestEvaluation,customerPlan,vehiclePlan,depotTimes,customerTimes,customerDemand,distCustomers,distDepot)
+        vehiclePlan,customerPlan,currentTabu,evaluation = BestOrOpt(h,tabuList,maxLength,s,Q,bestEvaluation,customerPlan,vehiclePlan,depotTimes,customerTimes,customerDemand,distCustomers,distDepot)
         tabuList = vcat(tabuList[2:end],currentTabu)
 
         if evaluation < bestEvaluation
