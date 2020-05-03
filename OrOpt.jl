@@ -69,7 +69,7 @@ function BestOrOpt(h,tabuList,maxLength,s,Q,bestSolution,customerPlan,vehiclePla
     currentCustomerPlan = customerPlan
     currentTabu = [(1000,1000)]
     for i = 1:C
-        neighbours = FindNeighbours(i,distCustomers,customerPlan,h)
+        neighbours = FindNeighbours(i,distCustomers,customerPlan,vehiclePlan,h)
         for j in neighbours
             newRoutes = OrOptSwitch(i,j,maxLength,Q,customerPlan,vehiclePlan,customerDemand,distDepot,distCustomers)
             for route in newRoutes
@@ -99,13 +99,15 @@ function BestOrOpt(h,tabuList,maxLength,s,Q,bestSolution,customerPlan,vehiclePla
     return currentVehiclePlan,currentCustomerPlan,currentTabu,currentEvaluation
 end
 
-function RunOrOpt(h,k,I,maxLength,vehiclePlan,customerPlan,bestVehiclePlan,bestCustomerPlan,tabuList)
+function RunOrOpt(h,I,maxLength,vehiclePlan,customerPlan,bestVehiclePlan,bestCustomerPlan,tabuList)
     bestEvaluation = TotalEvaluation(bestVehiclePlan,bestCustomerPlan,distDepot,distCustomers)[1]
+    results = Float64[]
 
     i = 0
     while i < I
         vehiclePlan,customerPlan,currentTabu,evaluation = BestOrOpt(h,tabuList,maxLength,s,Q,bestEvaluation,customerPlan,vehiclePlan,depotTimes,customerTimes,customerDemand,distCustomers,distDepot)
         tabuList = vcat(tabuList[2:end],currentTabu)
+        push!(results,evaluation)
 
         if evaluation < bestEvaluation
             i = 0
@@ -116,5 +118,7 @@ function RunOrOpt(h,k,I,maxLength,vehiclePlan,customerPlan,bestVehiclePlan,bestC
             i += 1
         end
     end
-    return vehiclePlan,customerPlan,bestVehiclePlan,bestCustomerPlan,tabuList
+    trend = (results[end] - results[1])/length(results)
+
+    return vehiclePlan,customerPlan,bestVehiclePlan,bestCustomerPlan,tabuList,trend
 end

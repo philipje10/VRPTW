@@ -27,7 +27,7 @@ function MinimizeVehicles(h,s,Q,customerPlan,vehiclePlan,depotTimes,customerTime
     allowedSwitches = AllowedSwitches(vehiclePlan)
 
     for i in allowedSwitches
-        neighbours = FindNeighbours(i,distCustomers,customerPlan,199)
+        neighbours = FindNeighbours(i,distCustomers,customerPlan,vehiclePlan,199)
         for j in neighbours
             if j ∉ allowedSwitches
                 newRoutes = OrOptSwitch(i,j,1,Q,customerPlan,vehiclePlan,customerDemand,distDepot,distCustomers)
@@ -47,7 +47,7 @@ function MinimizeVehicles(h,s,Q,customerPlan,vehiclePlan,depotTimes,customerTime
     residuals = shuffle!([i for i = 1:C if i ∉ allowedSwitches]) # Shuffle to add randomness
     if rand()<= 0.5
         for i in residuals
-            neighbours = shuffle!(FindNeighbours(i,distCustomers,customerPlan,h))
+            neighbours = shuffle!(FindNeighbours(i,distCustomers,customerPlan,vehiclePlan,h))
             for j in neighbours
                 if j ∉ allowedSwitches
                     newRoutes = OrOptSwitch(i,j,1,Q,customerPlan,vehiclePlan,customerDemand,distDepot,distCustomers)
@@ -66,7 +66,7 @@ function MinimizeVehicles(h,s,Q,customerPlan,vehiclePlan,depotTimes,customerTime
         end
     else
         for i in residuals
-            neighbours = shuffle!(FindNeighbours(i,distCustomers,customerPlan,h))
+            neighbours = shuffle!(FindNeighbours(i,distCustomers,customerPlan,vehiclePlan,h))
             for j in neighbours
                 if j ∉ allowedSwitches
                     newRoutes = TwoOptSwitch(i,j,Q,customerPlan,vehiclePlan,customerDemand,distDepot,distCustomers)

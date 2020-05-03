@@ -51,7 +51,7 @@ function BestTwoOpt(h,tabuList,s,Q,bestSolution,customerPlan,vehiclePlan,depotTi
     currentCustomerPlan = customerPlan
     currentTabu = [(1000,1000),(1000,1000)]
     for i = 1:C
-        neighbours = FindNeighbours(i,distCustomers,customerPlan,h)
+        neighbours = FindNeighbours(i,distCustomers,customerPlan,vehiclePlan,h)
         for j in neighbours
             newRoutes = TwoOptSwitch(i,j,Q,customerPlan,vehiclePlan,customerDemand,distDepot,distCustomers)
             newCustomerPlan = CreateNewPlans(newRoutes,customerPlan,s,depotTimes,customerTimes,distDepot,distCustomers)
@@ -81,13 +81,15 @@ function BestTwoOpt(h,tabuList,s,Q,bestSolution,customerPlan,vehiclePlan,depotTi
     return currentVehiclePlan,currentCustomerPlan,currentTabu,currentEvaluation
 end
 
-function RunTwoOpt(h,k,I,vehiclePlan,customerPlan,bestVehiclePlan,bestCustomerPlan,tabuList)
+function RunTwoOpt(h,I,vehiclePlan,customerPlan,bestVehiclePlan,bestCustomerPlan,tabuList)
     bestEvaluation = TotalEvaluation(bestVehiclePlan,bestCustomerPlan,distDepot,distCustomers)[1]
+    results = Float64[]
 
     i = 0
     while i < I
         vehiclePlan,customerPlan,currentTabu,evaluation = BestTwoOpt(h,tabuList,s,Q,bestEvaluation,customerPlan,vehiclePlan,depotTimes,customerTimes,customerDemand,distCustomers,distDepot)
         tabuList = vcat(tabuList[3:end],currentTabu)
+        push!(results,evaluation)
 
         if evaluation < bestEvaluation
             i = 0
@@ -98,5 +100,7 @@ function RunTwoOpt(h,k,I,vehiclePlan,customerPlan,bestVehiclePlan,bestCustomerPl
             i += 1
         end
     end
-    return vehiclePlan,customerPlan,bestVehiclePlan,bestCustomerPlan,tabuList
+    trend = (results[end] - results[1])/length(results)
+
+    return vehiclePlan,customerPlan,bestVehiclePlan,bestCustomerPlan,tabuList,trend
 end

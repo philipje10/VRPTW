@@ -51,7 +51,7 @@ function SolutionCheck(customerPlan,vehiclePlan,unvisitedCustomers,instance)
     end
 end
 
-function FindNeighbours(i,distCustomers,customerPlan,h) # h is number of neighbours
+function FindNeighbours(i,distCustomers,customerPlan,vehiclePlan,h) # h is number of neighbours
     C = length(customerPlan)
     distanceList = [(Float32(0.0),Int32(0)) for j = 1:C]
     for j = 1:C
@@ -147,7 +147,9 @@ function UsedVehicles(vehiclePlan)
     return usedVehicles
 end
 
-function PlotSolution(vehiclePlan,format,scale,instance)
+function PlotSolution(vehiclePlan,instance)
+    format = 160
+    scale = 10
     ~,~,C,depotCoordinates,~,customerCoordinates,~,~,~ = ReadInstance(instance)
     Drawing(format*scale, format*scale)
     background("white")
@@ -192,8 +194,9 @@ function PlotSolution(vehiclePlan,format,scale,instance)
     return preview()
 end
 
-function PrintSolution(vehiclePlan,customerPlan,distDepot,distCustomers,depotTimes,customerTimes)
-
+function PrintSolution(vehiclePlan,customerPlan,instance)
+    ~,~,~,depotCoordinates,depotTimes,customerCoordinates,~,customerTimes,~ = ReadInstance(instance)
+    distDepot,distCustomers = DistanceMatrix(depotCoordinates,customerCoordinates)
     r = 0
     for route in vehiclePlan
         if route[1] != Float32 && route[1] != 0
