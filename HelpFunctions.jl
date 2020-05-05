@@ -1,5 +1,6 @@
 using Luxor
 using DataFrames
+using Random
 
 function RouteCheck(Route,Q,depotCoordinates,depotTimes,customerCoordinates,customerDemand,customerTimes,distDepot,distCustomers)
     routeFeasibility = true
@@ -122,7 +123,9 @@ function RouteEvaluation(route,customerPlan,distDepot,distCustomers)
     return distance,waitingTime,capacity
 end
 
-function TotalEvaluation(vehiclePlan,customerPlan,distDepot,distCustomers)
+function TotalEvaluation(vehiclePlan,customerPlan,instance)
+    ~,~,~,depotCoordinates,~,customerCoordinates,~,~,~ = ReadInstance(instance)
+    distDepot,distCustomers = DistanceMatrix(depotCoordinates,customerCoordinates)
     totalDistance = 0
     usedVehicles = 0
     totalWaitingTime = 0
@@ -137,6 +140,17 @@ function TotalEvaluation(vehiclePlan,customerPlan,distDepot,distCustomers)
     return round(totalDistance,digits = 4),usedVehicles,round(totalWaitingTime,digits = 4)
 end
 
+function TotalDistance(vehiclePlan,customerPlan,distDepot,distCustomers)
+    totalDistance = 0
+    for route in vehiclePlan
+        if route[1] != Float32 && route[1] != 0
+            distance,~,~ = RouteEvaluation(route,customerPlan,distDepot,distCustomers)
+            totalDistance += distance
+        end
+    end
+    return round(totalDistance,digits = 4)
+end
+
 function UsedVehicles(vehiclePlan)
     usedVehicles = 0
     for route in vehiclePlan
@@ -145,6 +159,47 @@ function UsedVehicles(vehiclePlan)
         end
     end
     return usedVehicles
+end
+
+function RandomMove(locations,allowedSwitches,h,Q,s,customerPlan,vehiclePlan,customerDemand,distDepot,distCustomers,depotTimes,customerTimes)
+    shuffle!(locations)
+    if rand()<= 0.5
+        for i in locations
+            neighbours = shuffle!(FindNeighbours(i,distCustomers,customerPlan,vehiclePlan,h))
+            for j in neighbours
+                if j ∉ allowedSwitches
+                    newRoutes = OrOptSwitch(i,j,1,Q,customerPlan,vehiclePlan,customerDemand,distDepot,distCustomers)
+                    for route in newRoutes
+                        newCustomerPlan = CreateNewPlans(route,customerPlan,s,depotTimes,customerTimes,distDepot,distCustomers)
+                        if newCustomerPlan != false
+                            newVehiclePlan = deepcopy(vehiclePlan)
+                            newVehiclePlan[route[1][2]] = route[1][1]
+                            newVehiclePlan[route[2][2]] = route[2][1]
+                            # println("random move","::",i,"-",j)
+                            return newVehiclePlan,newCustomerPlan
+                        end
+                    end
+                end
+            end
+        end
+    else
+        for i in locations
+            neighbours = shuffle!(FindNeighbours(i,distCustomers,customerPlan,vehiclePlan,h))
+            for j in neighbours
+                if j ∉ allowedSwitches
+                    newRoutes = TwoOptSwitch(i,j,Q,customerPlan,vehiclePlan,customerDemand,distDepot,distCustomers)
+                    newCustomerPlan = CreateNewPlans(newRoutes,customerPlan,s,depotTimes,customerTimes,distDepot,distCustomers)
+                    if newCustomerPlan != false
+                        newVehiclePlan = deepcopy(vehiclePlan)
+                        newVehiclePlan[newRoutes[1][2]] = newRoutes[1][1]
+                        newVehiclePlan[newRoutes[2][2]] = newRoutes[2][1]
+                        # println("random move","::",i,"-",j)
+                        return newVehiclePlan,newCustomerPlan
+                    end
+                end
+            end
+        end
+    end
 end
 
 function PlotSolution(vehiclePlan,instance)

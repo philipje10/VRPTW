@@ -1,14 +1,3 @@
-include("Filereader.jl")
-include("InitialSolution.jl")
-include("HelpFunctions.jl")
-include("2Opt.jl")
-
-instance = "data/C1_2_1.TXT"
-
-K,Q,C,depotCoordinates,depotTimes,customerCoordinates,customerDemand,customerTimes,s = ReadInstance(instance)
-distDepot,distCustomers = DistanceMatrix(depotCoordinates,customerCoordinates)
-customerPlan, vehiclePlan, unvisitedCustomers = InitialSolutionBuilder(instance,5,1)
-
 function OrOptSwitch(i,j,maxLength,Q,customerPlan,vehiclePlan,customerDemand,distDepot,distCustomers)
     deltaVehicles = 0
     deltaDistance = 0
@@ -62,9 +51,9 @@ function OrOptSwitch(i,j,maxLength,Q,customerPlan,vehiclePlan,customerDemand,dis
     return newRoutes
 end
 
-function BestOrOpt(h,tabuList,maxLength,s,Q,bestSolution,customerPlan,vehiclePlan,depotTimes,customerTimes,customerDemand,distCustomers,distDepot)
+function BestOrOpt(h,C,tabuList,maxLength,s,Q,bestSolution,customerPlan,vehiclePlan,depotTimes,customerTimes,customerDemand,distCustomers,distDepot)
     currentEvaluation = 10^10
-    originalDistance,~,~ = TotalEvaluation(vehiclePlan,customerPlan,distDepot,distCustomers)
+    originalDistance = TotalDistance(vehiclePlan,customerPlan,distDepot,distCustomers)
     currentVehiclePlan = vehiclePlan
     currentCustomerPlan = customerPlan
     currentTabu = [(1000,1000)]
@@ -75,17 +64,23 @@ function BestOrOpt(h,tabuList,maxLength,s,Q,bestSolution,customerPlan,vehiclePla
             for route in newRoutes
                 newCustomerPlan = CreateNewPlans(route,customerPlan,s,depotTimes,customerTimes,distDepot,distCustomers)
                 if newCustomerPlan != false
-                    newVehiclePlan = deepcopy(vehiclePlan)
-                    newVehiclePlan[route[1][2]] = route[1][1]
-                    newVehiclePlan[route[2][2]] = route[2][1]
-                    # totalDistance,~,~ = TotalEvaluation(newVehiclePlan,newCustomerPlan,distDepot,distCustomers)
                     totalDistance = originalDistance + route[1][4] # Delta evaluation
                     if totalDistance < currentEvaluation && (i,j) ∉ tabuList
+
+                        newVehiclePlan = deepcopy(vehiclePlan)
+                        newVehiclePlan[route[1][2]] = route[1][1]
+                        newVehiclePlan[route[2][2]] = route[2][1]
+
                         currentEvaluation = totalDistance
                         currentVehiclePlan = newVehiclePlan
                         currentCustomerPlan = newCustomerPlan
                         currentTabu[1] = route[1][3]
                     elseif totalDistance < currentEvaluation && totalDistance < bestSolution # aspiration level (ignore Tabu list if better than overal best)
+
+                        newVehiclePlan = deepcopy(vehiclePlan)
+                        newVehiclePlan[route[1][2]] = route[1][1]
+                        newVehiclePlan[route[2][2]] = route[2][1]
+
                         currentEvaluation = totalDistance
                         currentVehiclePlan = newVehiclePlan
                         currentCustomerPlan = newCustomerPlan
@@ -99,13 +94,13 @@ function BestOrOpt(h,tabuList,maxLength,s,Q,bestSolution,customerPlan,vehiclePla
     return currentVehiclePlan,currentCustomerPlan,currentTabu,currentEvaluation
 end
 
-function RunOrOpt(h,I,maxLength,vehiclePlan,customerPlan,bestVehiclePlan,bestCustomerPlan,tabuList)
-    bestEvaluation = TotalEvaluation(bestVehiclePlan,bestCustomerPlan,distDepot,distCustomers)[1]
+function RunOrOpt(h,I,C,s,maxLength,Q,vehiclePlan,customerPlan,bestVehiclePlan,bestCustomerPlan,customerTimes,depotTimes,customerDemand,distCustomers,distDepot,tabuList)
+    bestEvaluation = TotalDistance(bestVehiclePlan,bestCustomerPlan,distDepot,distCustomers)
     results = Float64[]
 
     i = 0
     while i < I
-        vehiclePlan,customerPlan,currentTabu,evaluation = BestOrOpt(h,tabuList,maxLength,s,Q,bestEvaluation,customerPlan,vehiclePlan,depotTimes,customerTimes,customerDemand,distCustomers,distDepot)
+        vehiclePlan,customerPlan,currentTabu,evaluation = BestOrOpt(h,C,tabuList,maxLength,s,Q,bestEvaluation,customerPlan,vehiclePlan,depotTimes,customerTimes,customerDemand,distCustomers,distDepot)
         tabuList = vcat(tabuList[2:end],currentTabu)
         push!(results,evaluation)
 

@@ -1,4 +1,4 @@
-using Random
+include("HelpFunctions.jl")
 
 function AllowedSwitches(vehiclePlan)
     correspondingRoute = Int32[]
@@ -23,8 +23,8 @@ function AllowedSwitches(vehiclePlan)
 end
 
 
-function MinimizeVehicles(h,s,Q,customerPlan,vehiclePlan,depotTimes,customerTimes,customerDemand,distCustomers,distDepot)
-    allowedSwitches = AllowedSwitches(vehiclePlan)
+function MinimizeVehicles(h,s,Q,C,customerPlan,vehiclePlan,depotTimes,customerTimes,customerDemand,distCustomers,distDepot)
+    global allowedSwitches = AllowedSwitches(vehiclePlan)
 
     for i in allowedSwitches
         neighbours = FindNeighbours(i,distCustomers,customerPlan,vehiclePlan,199)
@@ -44,43 +44,12 @@ function MinimizeVehicles(h,s,Q,customerPlan,vehiclePlan,depotTimes,customerTime
             end
         end
     end
+    println("random move")
     residuals = shuffle!([i for i = 1:C if i ∉ allowedSwitches]) # Shuffle to add randomness
-    if rand()<= 0.5
-        for i in residuals
-            neighbours = shuffle!(FindNeighbours(i,distCustomers,customerPlan,vehiclePlan,h))
-            for j in neighbours
-                if j ∉ allowedSwitches
-                    newRoutes = OrOptSwitch(i,j,1,Q,customerPlan,vehiclePlan,customerDemand,distDepot,distCustomers)
-                    for route in newRoutes
-                        newCustomerPlan = CreateNewPlans(route,customerPlan,s,depotTimes,customerTimes,distDepot,distCustomers)
-                        if newCustomerPlan != false
-                            newVehiclePlan = deepcopy(vehiclePlan)
-                            newVehiclePlan[route[1][2]] = route[1][1]
-                            newVehiclePlan[route[2][2]] = route[2][1]
-                            println("random move","::",i,"-",j)
-                            return newVehiclePlan,newCustomerPlan
-                        end
-                    end
-                end
-            end
-        end
-    else
-        for i in residuals
-            neighbours = shuffle!(FindNeighbours(i,distCustomers,customerPlan,vehiclePlan,h))
-            for j in neighbours
-                if j ∉ allowedSwitches
-                    newRoutes = TwoOptSwitch(i,j,Q,customerPlan,vehiclePlan,customerDemand,distDepot,distCustomers)
-                    newCustomerPlan = CreateNewPlans(newRoutes,customerPlan,s,depotTimes,customerTimes,distDepot,distCustomers)
-                    if newCustomerPlan != false
-                        newVehiclePlan = deepcopy(vehiclePlan)
-                        newVehiclePlan[newRoutes[1][2]] = newRoutes[1][1]
-                        newVehiclePlan[newRoutes[2][2]] = newRoutes[2][1]
-                        println("random move","::",i,"-",j)
-                        return newVehiclePlan,newCustomerPlan
-                    end
-                end
-            end
-        end
+    try # Apply random move if possible
+        newVehiclePlan,newCustomerPlan = RandomMove(residuals,allowedSwitches,h,Q,s,customerPlan,vehiclePlan,customerDemand,distDepot,distCustomers,depotTimes,customerTimes)
+        return newVehiclePlan,newCustomerPlan
+    catch # If no random move available, return the old vehicle/customerPlan
+        return vehiclePlan,customerPlan
     end
-    return false,false
 end

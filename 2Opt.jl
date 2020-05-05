@@ -44,9 +44,9 @@ function TwoOptSwitch(i,j,Q,customerPlan,vehiclePlan,customerDemand,distDepot,di
     end
 end
 
-function BestTwoOpt(h,tabuList,s,Q,bestSolution,customerPlan,vehiclePlan,depotTimes,customerTimes,customerDemand,distCustomers,distDepot)
+function BestTwoOpt(h,C,tabuList,s,Q,bestSolution,customerPlan,vehiclePlan,depotTimes,customerTimes,customerDemand,distCustomers,distDepot)
     currentEvaluation = 10^10
-    originalDistance,~,~ = TotalEvaluation(vehiclePlan,customerPlan,distDepot,distCustomers)
+    originalDistance = TotalDistance(vehiclePlan,customerPlan,distDepot,distCustomers)
     currentVehiclePlan = vehiclePlan
     currentCustomerPlan = customerPlan
     currentTabu = [(1000,1000),(1000,1000)]
@@ -56,18 +56,22 @@ function BestTwoOpt(h,tabuList,s,Q,bestSolution,customerPlan,vehiclePlan,depotTi
             newRoutes = TwoOptSwitch(i,j,Q,customerPlan,vehiclePlan,customerDemand,distDepot,distCustomers)
             newCustomerPlan = CreateNewPlans(newRoutes,customerPlan,s,depotTimes,customerTimes,distDepot,distCustomers)
             if newCustomerPlan != false
-                newVehiclePlan = deepcopy(vehiclePlan)
-                newVehiclePlan[newRoutes[1][2]] = newRoutes[1][1]
-                newVehiclePlan[newRoutes[2][2]] = newRoutes[2][1]
-                # totalDistance,~,~ = TotalEvaluation(newVehiclePlan,newCustomerPlan,distDepot,distCustomers)
                 totalDistance = originalDistance + newRoutes[1][4] # Delta evaluation
                 if totalDistance < currentEvaluation && (i,j) ∉ tabuList
+                    newVehiclePlan = deepcopy(vehiclePlan)
+                    newVehiclePlan[newRoutes[1][2]] = newRoutes[1][1]
+                    newVehiclePlan[newRoutes[2][2]] = newRoutes[2][1]
+
                     currentEvaluation = totalDistance
                     currentVehiclePlan = newVehiclePlan
                     currentCustomerPlan = newCustomerPlan
                     currentTabu[1] = newRoutes[1][3]
                     currentTabu[2] = newRoutes[2][3]
                 elseif totalDistance < currentEvaluation && totalDistance < bestSolution # aspiration level (ignore Tabu list if better than overal best)
+                    newVehiclePlan = deepcopy(vehiclePlan)
+                    newVehiclePlan[newRoutes[1][2]] = newRoutes[1][1]
+                    newVehiclePlan[newRoutes[2][2]] = newRoutes[2][1]
+
                     currentEvaluation = totalDistance
                     currentVehiclePlan = newVehiclePlan
                     currentCustomerPlan = newCustomerPlan
@@ -81,13 +85,13 @@ function BestTwoOpt(h,tabuList,s,Q,bestSolution,customerPlan,vehiclePlan,depotTi
     return currentVehiclePlan,currentCustomerPlan,currentTabu,currentEvaluation
 end
 
-function RunTwoOpt(h,I,vehiclePlan,customerPlan,bestVehiclePlan,bestCustomerPlan,tabuList)
-    bestEvaluation = TotalEvaluation(bestVehiclePlan,bestCustomerPlan,distDepot,distCustomers)[1]
+function RunTwoOpt(h,s,C,Q,I,vehiclePlan,customerPlan,bestVehiclePlan,bestCustomerPlan,distDepot,distCustomers,depotTimes,customerTimes,customerDemand,tabuList)
+    bestEvaluation = TotalDistance(bestVehiclePlan,bestCustomerPlan,distDepot,distCustomers)
     results = Float64[]
 
     i = 0
     while i < I
-        vehiclePlan,customerPlan,currentTabu,evaluation = BestTwoOpt(h,tabuList,s,Q,bestEvaluation,customerPlan,vehiclePlan,depotTimes,customerTimes,customerDemand,distCustomers,distDepot)
+        vehiclePlan,customerPlan,currentTabu,evaluation = BestTwoOpt(h,C,tabuList,s,Q,bestEvaluation,customerPlan,vehiclePlan,depotTimes,customerTimes,customerDemand,distCustomers,distDepot)
         tabuList = vcat(tabuList[3:end],currentTabu)
         push!(results,evaluation)
 

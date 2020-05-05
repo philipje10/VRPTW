@@ -1,5 +1,3 @@
-using Random
-
 function InitializePlans(C,K)
     customerPlan = [[Int32,zeros(Float32,3)] for i = 1:C] # [[[truck],[arrival,service,depart]],...,]
     vehiclePlan = [[Float32,Int32[]] for i = 1:K] # [[[used capacity],[route]],...,]
@@ -114,8 +112,7 @@ function PossibleNextLocations(vehiclePlan,unvisitedCustomers,s,Q,depotTimes,cus
     end
 end
 
-function ChooseRandom(array,seed)
-    Random.seed!(seed)
+function ChooseRandom(array)
     if isempty(array)
         return nothing
     else
@@ -125,11 +122,11 @@ function ChooseRandom(array,seed)
     end
 end
 
-function NextCustomer(options,seed,possibleLocations, unvisitedCustomers)
+function NextCustomer(options,possibleLocations, unvisitedCustomers)
     if possibleLocations == nothing
         return nothing
     else
-        nextCustomer = ChooseRandom(possibleLocations[1:min(length(possibleLocations),options)],seed)
+        nextCustomer = ChooseRandom(possibleLocations[1:min(length(possibleLocations),options)])
         return nextCustomer[2]
     end
 end
@@ -165,7 +162,7 @@ function UpdatePlans(s,nextCustomer,unvisitedCustomers,vehiclePlan,customerPlan,
     return unvisitedCustomers,vehiclePlan,customerPlan
 end
 
-function InitialSolutionBuilder(File,Randomization,seed)
+function InitialSolutionBuilder(File,Randomization)
 
     K,Q,C,depotCoordinates,depotTimes,customerCoordinates,customerDemand,customerTimes,s = ReadInstance(File)
     distDepot,distCustomers = DistanceMatrix(depotCoordinates,customerCoordinates)
@@ -175,7 +172,7 @@ function InitialSolutionBuilder(File,Randomization,seed)
 
     while length(unvisitedCustomers) > 0 && currentVehicle <= K
         possibleLocations = PossibleNextLocations(vehiclePlan,unvisitedCustomers,s,Q,depotTimes,customerTimes,distDepot,distCustomers,customerDemand,customerPlan)
-        nextCustomer = NextCustomer(Randomization,seed,possibleLocations, unvisitedCustomers)
+        nextCustomer = NextCustomer(Randomization,possibleLocations, unvisitedCustomers)
         if nextCustomer == nothing && CurrentVehicle(vehiclePlan) == K
             currentVehicle == (K + 1)
             push!(vehiclePlan[CurrentVehicle(vehiclePlan)][2],0)
