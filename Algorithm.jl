@@ -64,5 +64,5 @@ function VRPTW(seed,instance,timeLimit,twoOptStart,tenure,I,h,k,initialRandomnes
         # println("d = ",dSum)
     end
     bestDistance = TotalDistance(bestVehiclePlan,bestCustomerPlan,distDepot,distCustomers)
-    return bestDistance
+    return bestVehiclePlan,bestCustomerPlan,bestDistance
 end
