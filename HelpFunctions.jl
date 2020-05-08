@@ -1,6 +1,7 @@
 using Luxor
 using DataFrames
 using Random
+using CSV
 
 function RouteCheck(Route,Q,depotCoordinates,depotTimes,customerCoordinates,customerDemand,customerTimes,distDepot,distCustomers)
     routeFeasibility = true
