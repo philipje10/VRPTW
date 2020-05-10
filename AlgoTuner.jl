@@ -1,3 +1,11 @@
+"""The AlgoTuner is adapted from https://github.com/dpacino/AlgoTuner.jl. The AlgoTuner is
+licenced under the GNU General Public License v3.0.
+
+Permissions of this strong copyleft license are conditioned on making available complete source
+code of licensed works and modifications, which include larger works using a licensed work,
+under the same license. Copyright and license notices must be preserved. Contributors provide
+an express grant of patent rights."""
+
 using AlgoTuner
 include("Algorithm.jl")
 
@@ -13,13 +21,13 @@ end
 
 benchmark,bestKnown = GetBestKnownValues()
 
-VRPTW_Tuner(seed,instance,tenure,I,operatorRandomness) =
-        (VRPTW(seed,instance,300,true,tenure,I,15,(5,30),1,operatorRandomness,2) - bestKnown[instance])/bestKnown[instance]
+VRPTW_Tuner(seed,instance,tenure,I,R_operator) =
+        (VRPTW(seed,instance,300,true,d,I,15,(5,30),1,R_operator,2) - bestKnown[instance])/bestKnown[instance]
 
 cmd = AlgoTuner.createRuntimeCommand(VRPTW_Tuner)
 
-AlgoTuner.addIntParam(cmd,"tenure",1,10)
+AlgoTuner.addIntParam(cmd,"d",1,10)
 AlgoTuner.addIntParam(cmd,"I",5,15)
-AlgoTuner.addIntParam(cmd,"operatorRandomness",1,20)
+AlgoTuner.addIntParam(cmd,"R_operator",1,20)
 
 AlgoTuner.tune(cmd,benchmark,36000,4,[3869,5473,2690,8375],AlgoTuner.ShowAll)

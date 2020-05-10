@@ -3,6 +3,8 @@ using DataFrames
 using Random
 using CSV
 
+"""Checks route for feasibility based on three measures: (1) the maximum capacity,
+(2) the travel time must be respected, and (3) the customer time windows must be respected"""
 function RouteCheck(Route,Q,depotCoordinates,depotTimes,customerCoordinates,customerDemand,customerTimes,distDepot,distCustomers)
     routeFeasibility = true
     if Route[1] > Q    # capacity check
@@ -37,6 +39,7 @@ function RouteCheck(Route,Q,depotCoordinates,depotTimes,customerCoordinates,cust
     return routeFeasibility
 end
 
+"""Checks if the solution is feasible, based on the feasibility of the routes"""
 function SolutionCheck(customerPlan,vehiclePlan,unvisitedCustomers,instance)
     ~,Q,~,depotCoordinates,depotTimes,customerCoordinates,customerDemand,customerTimes,~ = ReadInstance(instance)
     distDepot,distCustomers = DistanceMatrix(depotCoordinates,customerCoordinates)
@@ -53,6 +56,7 @@ function SolutionCheck(customerPlan,vehiclePlan,unvisitedCustomers,instance)
     end
 end
 
+"""Given a customer i, returns the h nearest neighbours"""
 function FindNeighbours(i,distCustomers,customerPlan,vehiclePlan,h) # h is number of neighbours
     C = length(customerPlan)
     distanceList = [(Float32(0.0),Int32(0)) for j = 1:C]
@@ -74,6 +78,8 @@ function FindNeighbours(i,distCustomers,customerPlan,vehiclePlan,h) # h is numbe
     return neighbours
 end
 
+"""Given new routes, creates a new customerplan with the arrival, service,
+and departure times adjusted, and with the correct vehicle number"""
 function CreateNewPlans(newRoutes,customerPlan,s,depotTimes,customerTimes,distDepot,distCustomers)
     newCustomerPlan = deepcopy(customerPlan)
     if newRoutes == false
@@ -109,6 +115,7 @@ function CreateNewPlans(newRoutes,customerPlan,s,depotTimes,customerTimes,distDe
     return newCustomerPlan
 end
 
+"""Evaluates the route for the three KPI's: (1) distance, (2) waiting time, and (3) capacity"""
 function RouteEvaluation(route,customerPlan,distDepot,distCustomers)
     distance = 0
     waitingTime = 0
@@ -124,6 +131,7 @@ function RouteEvaluation(route,customerPlan,distDepot,distCustomers)
     return distance,waitingTime,capacity
 end
 
+"""Uses the route evaluation to create aggregated evaluation values"""
 function TotalEvaluation(vehiclePlan,customerPlan,instance)
     ~,~,~,depotCoordinates,~,customerCoordinates,~,~,~ = ReadInstance(instance)
     distDepot,distCustomers = DistanceMatrix(depotCoordinates,customerCoordinates)
@@ -141,6 +149,7 @@ function TotalEvaluation(vehiclePlan,customerPlan,instance)
     return round(totalDistance,digits = 4),usedVehicles,round(totalWaitingTime,digits = 4)
 end
 
+"""Function that only returns the distance. Function meant to call inside loops"""
 function TotalDistance(vehiclePlan,customerPlan,distDepot,distCustomers)
     totalDistance = 0
     for route in vehiclePlan
@@ -152,6 +161,7 @@ function TotalDistance(vehiclePlan,customerPlan,distDepot,distCustomers)
     return round(totalDistance,digits = 4)
 end
 
+"""Function that only returns the vehicles. Function meant to call inside loops"""
 function UsedVehicles(vehiclePlan)
     usedVehicles = 0
     for route in vehiclePlan
@@ -162,6 +172,20 @@ function UsedVehicles(vehiclePlan)
     return usedVehicles
 end
 
+"""Function that chooses a random element from an array"""
+function ChooseRandom(array)
+    if isempty(array)
+        return nothing
+    else
+        n = length(array)
+        idx = rand(1:n)
+        return array[idx]
+    end
+end
+
+"""Given a number of locations and allowed switches, returns a vehicle and customer plan
+with random changes in the route (if and only if they remain feasible). The random function
+determines whether the or-opt or 2-opt operator is applied"""
 function RandomMove(locations,allowedSwitches,h,Q,s,customerPlan,vehiclePlan,customerDemand,distDepot,distCustomers,depotTimes,customerTimes)
     shuffle!(locations)
     if rand()<= 0.5
@@ -176,7 +200,6 @@ function RandomMove(locations,allowedSwitches,h,Q,s,customerPlan,vehiclePlan,cus
                             newVehiclePlan = deepcopy(vehiclePlan)
                             newVehiclePlan[route[1][2]] = route[1][1]
                             newVehiclePlan[route[2][2]] = route[2][1]
-                            # println("random move","::",i,"-",j)
                             return newVehiclePlan,newCustomerPlan
                         end
                     end
@@ -194,7 +217,6 @@ function RandomMove(locations,allowedSwitches,h,Q,s,customerPlan,vehiclePlan,cus
                         newVehiclePlan = deepcopy(vehiclePlan)
                         newVehiclePlan[newRoutes[1][2]] = newRoutes[1][1]
                         newVehiclePlan[newRoutes[2][2]] = newRoutes[2][1]
-                        # println("random move","::",i,"-",j)
                         return newVehiclePlan,newCustomerPlan
                     end
                 end
@@ -250,6 +272,8 @@ function PlotSolution(vehiclePlan,instance)
     return preview()
 end
 
+"""Prints every route as a dataframe, including exact arrival, service, and departure times,
+including waiting times and the route evaluation"""
 function PrintSolution(vehiclePlan,customerPlan,instance)
     ~,~,~,depotCoordinates,depotTimes,customerCoordinates,~,customerTimes,~ = ReadInstance(instance)
     distDepot,distCustomers = DistanceMatrix(depotCoordinates,customerCoordinates)

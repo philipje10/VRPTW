@@ -1,3 +1,5 @@
+"""An empty customer and vehicle plan are created based on the number of
+customers and on the number of vehicles"""
 function InitializePlans(C,K)
     customerPlan = [[Int32,zeros(Float32,3)] for i = 1:C] # [[[truck],[arrival,service,depart]],...,]
     vehiclePlan = [[Float32,Int32[]] for i = 1:K] # [[[used capacity],[route]],...,]
@@ -7,11 +9,15 @@ function InitializePlans(C,K)
     return customerPlan, vehiclePlan, unvisitedCustomers
 end
 
-# e_i = earliest time window of customer i
-# f_i = latest time window of customer i
-# s = service time
-# t_i = actual service time at customer i
+"""
+General notation remark:
+e_i = earliest time window of customer i
+f_i = latest time window of customer i
+s = service time
+t_i = actual service time at customer i
+"""
 
+"""Translates the distance matrix and distance array to one function"""
 function Distance(i,j,distDepot,distCustomers) # distance from i to j
     if i == 0
         if j == 0
@@ -30,7 +36,8 @@ function Distance(i,j,distDepot,distCustomers) # distance from i to j
     end
 end
 
-function BetweenTime(i,j,s,depotTimes,customerTimes,customerPlan,distDepot,distCustomers) # time between the departure from customer i and the service of customer j
+"""Calculates time between the departure from customer i and the service of customer j"""
+function BetweenTime(i,j,s,depotTimes,customerTimes,customerPlan,distDepot,distCustomers)
     if j ==0
         depotTimes[1]
     else
@@ -48,7 +55,8 @@ function BetweenTime(i,j,s,depotTimes,customerTimes,customerPlan,distDepot,distC
     return max(e_j,max(e_i,t_i)+s_i+Distance(i,j,distDepot,distCustomers)) - (t_i+s_i)
 end
 
-function UnfeasibleTime(i,j,s,depotTimes,customerTimes,customerPlan,distDepot,distCustomers) # time until customer j would be unfeasible on route
+"""Calculates time until customer j would be unfeasible on route"""
+function UnfeasibleTime(i,j,s,depotTimes,customerTimes,customerPlan,distDepot,distCustomers)
     if j == 0
         f_j = depotTimes[2]
     else
@@ -66,13 +74,16 @@ function UnfeasibleTime(i,j,s,depotTimes,customerTimes,customerPlan,distDepot,di
     return f_j - (t_i + s_i + Distance(i,j,distDepot,distCustomers))
 end
 
-
+"""Returns the evaluation value that determines the next assigned customer to the route.
+The notion 'Assessment' has been used to avoid overlap with the evaluation function in
+the tabu search"""
 function Assessment(i,j,s,distDepot,distCustomers,depotTimes,customerTimes,customerPlan) # Route assessment based on distance, between time, and time till unfeasibility
     return ((1/3) * Distance(i,j,distDepot,distCustomers)
             + (1/3) * BetweenTime(i,j,s,depotTimes,customerTimes,customerPlan,distDepot,distCustomers)
             + (1/3) * UnfeasibleTime(i,j,s,depotTimes,customerTimes,customerPlan,distDepot,distCustomers))
 end
 
+"""Determines which vehicle is currently being filled based on the vehicle plan"""
 function CurrentVehicle(vehiclePlan)
     i = 0
     while vehiclePlan[i+1][1] != Float32
@@ -81,6 +92,9 @@ function CurrentVehicle(vehiclePlan)
     return i
 end
 
+"""Checks whether the next customer will be feasible if inserted into the route based on
+three criteria: (1) time windows must be satisfied, (2) the vehicle must have sufficient
+time to return back to the depot, and (3) capacity cannot be exceeded"""
 function FeasibilityCustomer(i,j,s,Q,depotTimes,customerTimes,customerDemand,customerPlan,vehiclePlan,distDepot,distCustomers) # Based on UnfeasibleTime, time to return to depot, and capacity
     Feasibility = UnfeasibleTime(i,j,s,depotTimes,customerTimes,customerPlan,distDepot,distCustomers) >= 0
     if i == 0
@@ -97,6 +111,7 @@ function FeasibilityCustomer(i,j,s,Q,depotTimes,customerTimes,customerDemand,cus
     return Feasibility * returnToDepot * capacity
 end
 
+"""Returns a list of possible feasible customer locations"""
 function PossibleNextLocations(vehiclePlan,unvisitedCustomers,s,Q,depotTimes,customerTimes,distDepot,distCustomers,customerDemand,customerPlan)
     i = vehiclePlan[CurrentVehicle(vehiclePlan)][2][end]
     possibleLocations = Tuple{Float32,Int32}[]
@@ -112,16 +127,7 @@ function PossibleNextLocations(vehiclePlan,unvisitedCustomers,s,Q,depotTimes,cus
     end
 end
 
-function ChooseRandom(array)
-    if isempty(array)
-        return nothing
-    else
-        n = length(array)
-        idx = rand(1:n)
-        return array[idx]
-    end
-end
-
+"""Chooses the next customer from the possible customers"""
 function NextCustomer(options,possibleLocations, unvisitedCustomers)
     if possibleLocations == nothing
         return nothing
@@ -131,6 +137,7 @@ function NextCustomer(options,possibleLocations, unvisitedCustomers)
     end
 end
 
+"""Updates the customer and vehicle plans after addition of a new customer to a route"""
 function UpdatePlans(s,nextCustomer,unvisitedCustomers,vehiclePlan,customerPlan,distDepot,distCustomers,depotTimes,customerTimes,customerDemand)
     # if nothing: Add zero to end route, activate new truck
     if nextCustomer == nothing
@@ -162,6 +169,7 @@ function UpdatePlans(s,nextCustomer,unvisitedCustomers,vehiclePlan,customerPlan,
     return unvisitedCustomers,vehiclePlan,customerPlan
 end
 
+"""Repeats insertion of customer untill all there are no unvisited customers left"""
 function InitialSolutionBuilder(File,Randomization)
 
     K,Q,C,depotCoordinates,depotTimes,customerCoordinates,customerDemand,customerTimes,s = ReadInstance(File)

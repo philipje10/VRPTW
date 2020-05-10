@@ -1,3 +1,4 @@
+"""Given a customer i and customer j returns the vehicle plan with the 2-opt* switch applied"""
 function TwoOptSwitch(i,j,Q,customerPlan,vehiclePlan,customerDemand,distDepot,distCustomers) #j = j + 1
     deltaVehicles = 0
     deltaDistance = 0
@@ -44,6 +45,7 @@ function TwoOptSwitch(i,j,Q,customerPlan,vehiclePlan,customerDemand,distDepot,di
     end
 end
 
+"""Evaluates which 2-opt* switch is the best to apply"""
 function BestTwoOpt(h,C,tabuList,s,Q,bestSolution,customerPlan,vehiclePlan,depotTimes,customerTimes,customerDemand,distCustomers,distDepot)
     currentEvaluation = 10^10
     originalDistance = TotalDistance(vehiclePlan,customerPlan,distDepot,distCustomers)
@@ -81,10 +83,10 @@ function BestTwoOpt(h,C,tabuList,s,Q,bestSolution,customerPlan,vehiclePlan,depot
             end
         end
     end
-    println(currentEvaluation)
     return currentVehiclePlan,currentCustomerPlan,currentTabu,currentEvaluation
 end
 
+"""Runs 2-opt* operation such that it can be applied inside the main loop"""
 function RunTwoOpt(h,s,C,Q,I,vehiclePlan,customerPlan,bestVehiclePlan,bestCustomerPlan,distDepot,distCustomers,depotTimes,customerTimes,customerDemand,tabuList)
     bestEvaluation = TotalDistance(bestVehiclePlan,bestCustomerPlan,distDepot,distCustomers)
     results = Float64[]
@@ -96,6 +98,7 @@ function RunTwoOpt(h,s,C,Q,I,vehiclePlan,customerPlan,bestVehiclePlan,bestCustom
         push!(results,evaluation)
 
         if evaluation < bestEvaluation
+            println("Improvement: ",round(evaluation,digits = 4))
             i = 0
             bestEvaluation = evaluation
             bestVehiclePlan = vehiclePlan
@@ -104,6 +107,10 @@ function RunTwoOpt(h,s,C,Q,I,vehiclePlan,customerPlan,bestVehiclePlan,bestCustom
             i += 1
         end
     end
+
+    evaluation = TotalDistance(vehiclePlan,customerPlan,distDepot,distCustomers)
+
+    println("No improvement: ",round(evaluation,digits = 4))
     trend = (results[end] - results[1])/length(results)
 
     return vehiclePlan,customerPlan,bestVehiclePlan,bestCustomerPlan,tabuList,trend

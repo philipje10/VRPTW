@@ -1,5 +1,5 @@
-include("HelpFunctions.jl")
-
+"""Returns a list of allowed switches. Only switches with customers inside
+the shortest route are allowed"""
 function AllowedSwitches(vehiclePlan)
     correspondingRoute = Int32[]
     shortestRoute = 10^10
@@ -22,7 +22,9 @@ function AllowedSwitches(vehiclePlan)
     return allowedSwitches
 end
 
-
+"""Function that tries to insert a customer from the shortest route (allowed switch) into
+another route. In case there is no possibility of applying an allowed switch (no feasible
+options), a random move is applied to create 'space' inside the plan"""
 function MinimizeVehicles(h,s,Q,C,customerPlan,vehiclePlan,depotTimes,customerTimes,customerDemand,distCustomers,distDepot)
     global allowedSwitches = AllowedSwitches(vehiclePlan)
 
@@ -37,14 +39,13 @@ function MinimizeVehicles(h,s,Q,C,customerPlan,vehiclePlan,depotTimes,customerTi
                         newVehiclePlan = deepcopy(vehiclePlan)
                         newVehiclePlan[route[1][2]] = route[1][1]
                         newVehiclePlan[route[2][2]] = route[2][1]
-                        println("minimize min route")
+                        println("Route minimized")
                         return newVehiclePlan,newCustomerPlan
                     end
                 end
             end
         end
     end
-    println("random move")
     residuals = shuffle!([i for i = 1:C if i ∉ allowedSwitches]) # Shuffle to add randomness
     try # Apply random move if possible
         newVehiclePlan,newCustomerPlan = RandomMove(residuals,allowedSwitches,h,Q,s,customerPlan,vehiclePlan,customerDemand,distDepot,distCustomers,depotTimes,customerTimes)

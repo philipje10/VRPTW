@@ -30,6 +30,8 @@ function ReadInstance(filename)
     return K,Q,C,depotCoordinates,depotTimes,customerCoordinates,customerDemand,customerTimes,s
 end
 
+"""Translates the depot and customer coordinates to a distance matrix of distances
+between customers and to an array with the distances from the depot to a customer"""
 function DistanceMatrix(depotCoordinates,customerCoordinates)
     C = size(customerCoordinates)[1]
     distDepot = zeros(Float64,C)

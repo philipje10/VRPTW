@@ -1,3 +1,4 @@
+"""Given a customer i and customer j returns the vehicle plan with the or-opt switch insertion"""
 function OrOptSwitch(i,j,maxLength,Q,customerPlan,vehiclePlan,customerDemand,distDepot,distCustomers)
     deltaVehicles = 0
     deltaDistance = 0
@@ -51,6 +52,7 @@ function OrOptSwitch(i,j,maxLength,Q,customerPlan,vehiclePlan,customerDemand,dis
     return newRoutes
 end
 
+"""Evaluates which or-opt insertion is the best to apply"""
 function BestOrOpt(h,C,tabuList,maxLength,s,Q,bestSolution,customerPlan,vehiclePlan,depotTimes,customerTimes,customerDemand,distCustomers,distDepot)
     currentEvaluation = 10^10
     originalDistance = TotalDistance(vehiclePlan,customerPlan,distDepot,distCustomers)
@@ -90,10 +92,10 @@ function BestOrOpt(h,C,tabuList,maxLength,s,Q,bestSolution,customerPlan,vehicleP
             end
         end
     end
-    println(currentEvaluation)
     return currentVehiclePlan,currentCustomerPlan,currentTabu,currentEvaluation
 end
 
+"""Runs or-opt operation such that it can be applied inside the main loop"""
 function RunOrOpt(h,I,C,s,maxLength,Q,vehiclePlan,customerPlan,bestVehiclePlan,bestCustomerPlan,customerTimes,depotTimes,customerDemand,distCustomers,distDepot,tabuList)
     bestEvaluation = TotalDistance(bestVehiclePlan,bestCustomerPlan,distDepot,distCustomers)
     results = Float64[]
@@ -105,6 +107,7 @@ function RunOrOpt(h,I,C,s,maxLength,Q,vehiclePlan,customerPlan,bestVehiclePlan,b
         push!(results,evaluation)
 
         if evaluation < bestEvaluation
+            println("Improvement: ",round(evaluation,digits = 4))
             i = 0
             bestEvaluation = evaluation
             bestVehiclePlan = vehiclePlan
@@ -113,6 +116,9 @@ function RunOrOpt(h,I,C,s,maxLength,Q,vehiclePlan,customerPlan,bestVehiclePlan,b
             i += 1
         end
     end
+    evaluation = TotalDistance(vehiclePlan,customerPlan,distDepot,distCustomers)
+
+    println("No improvement: ",round(evaluation,digits = 4))
     trend = (results[end] - results[1])/length(results)
 
     return vehiclePlan,customerPlan,bestVehiclePlan,bestCustomerPlan,tabuList,trend
