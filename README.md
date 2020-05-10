@@ -3,8 +3,7 @@ This code contains the implementation of the Tabu search metaheuristic. The impl
 
 ## Running the metaheuristic:
 Run the Driver.jl file. Call the VRPTW function with the following parameters:
-
-'VRPTW(seed,instance,timeLimit,twoOptStart,d,I,h,k,R_init,R_operator,maxChain)'
+`VRPTW(seed,instance,timeLimit,twoOptStart,d,I,h,k,R_init,R_operator,maxChain)`
 
 seed:           random seed number (default = 12345)
 
