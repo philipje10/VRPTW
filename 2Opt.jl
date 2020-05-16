@@ -90,6 +90,7 @@ end
 function RunTwoOpt(h,s,C,Q,I,vehiclePlan,customerPlan,bestVehiclePlan,bestCustomerPlan,distDepot,distCustomers,depotTimes,customerTimes,customerDemand,tabuList)
     bestEvaluation = TotalDistance(bestVehiclePlan,bestCustomerPlan,distDepot,distCustomers)
     results = Float64[]
+    df = DataFrame(time = Float32[],value = Float32[])
 
     i = 0
     while i < I
@@ -99,6 +100,7 @@ function RunTwoOpt(h,s,C,Q,I,vehiclePlan,customerPlan,bestVehiclePlan,bestCustom
 
         if evaluation < bestEvaluation
             println("Improvement: ",round(evaluation,digits = 4))
+            push!(df,[time_ns(),evaluation])
             i = 0
             bestEvaluation = evaluation
             bestVehiclePlan = vehiclePlan
@@ -113,5 +115,5 @@ function RunTwoOpt(h,s,C,Q,I,vehiclePlan,customerPlan,bestVehiclePlan,bestCustom
     println("No improvement: ",round(evaluation,digits = 4))
     trend = (results[end] - results[1])/length(results)
 
-    return vehiclePlan,customerPlan,bestVehiclePlan,bestCustomerPlan,tabuList,trend
+    return vehiclePlan,customerPlan,bestVehiclePlan,bestCustomerPlan,tabuList,trend,df
 end

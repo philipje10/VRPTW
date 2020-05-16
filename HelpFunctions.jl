@@ -183,6 +183,12 @@ function ChooseRandom(array)
     end
 end
 
+"""Translates the time value in dataframe to difference time between start algorithm
+and findings of that specific value"""
+function CorrectTime(startTime,x)
+    return round((x - startTime)/1e9,digits=3)
+end
+
 """Given a number of locations and allowed switches, returns a vehicle and customer plan
 with random changes in the route (if and only if they remain feasible). The random function
 determines whether the or-opt or 2-opt operator is applied"""

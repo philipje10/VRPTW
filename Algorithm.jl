@@ -42,6 +42,7 @@ function VRPTW(seed,instance,timeLimit,twoOptStart,d,I,h,k,R_init,R_operator,max
     tabuListTwoOpt = [(1000,1000) for i = 1:(k[1]*2)] # initialize tabu list
     bestVehiclePlan = deepcopy(vehiclePlan)
     bestCustomerPlan = deepcopy(customerPlan)
+    runTimeAnalysis = DataFrame(time = Float32[],value = Float32[])
 
     println("")
     println("Start minimizing vehicles ...")
@@ -76,12 +77,13 @@ function VRPTW(seed,instance,timeLimit,twoOptStart,d,I,h,k,R_init,R_operator,max
     startTime = time_ns()
     while round((time_ns()-startTime)/1e9,digits=3) < timeLimit*(9/10)  # run while loop for t sec.
         if TwoOpt
-            vehiclePlan,customerPlan,bestVehiclePlan,bestCustomerPlan,tabuListTwoOpt,trend = RunTwoOpt(h,s,C,Q,I,vehiclePlan,customerPlan,bestVehiclePlan,bestCustomerPlan,distDepot,distCustomers,depotTimes,customerTimes,customerDemand,tabuListTwoOpt)
+            vehiclePlan,customerPlan,bestVehiclePlan,bestCustomerPlan,tabuListTwoOpt,trend,df = RunTwoOpt(h,s,C,Q,I,vehiclePlan,customerPlan,bestVehiclePlan,bestCustomerPlan,distDepot,distCustomers,depotTimes,customerTimes,customerDemand,tabuListTwoOpt)
             TwoOpt = false
         else
-            vehiclePlan,customerPlan,bestVehiclePlan,bestCustomerPlan,tabuListOrOpt,trend = RunOrOpt(h,I,C,s,maxChain,Q,vehiclePlan,customerPlan,bestVehiclePlan,bestCustomerPlan,customerTimes,depotTimes,customerDemand,distCustomers,distDepot,tabuListOrOpt)
+            vehiclePlan,customerPlan,bestVehiclePlan,bestCustomerPlan,tabuListOrOpt,trend,df = RunOrOpt(h,I,C,s,maxChain,Q,vehiclePlan,customerPlan,bestVehiclePlan,bestCustomerPlan,customerTimes,depotTimes,customerDemand,distCustomers,distDepot,tabuListOrOpt)
             TwoOpt = true
         end
+        append!(runTimeAnalysis,df)
         if trend > 0
             try # If no random moves are possible, continue with next iteration
                 for i = 1:R_operator
@@ -100,6 +102,9 @@ function VRPTW(seed,instance,timeLimit,twoOptStart,d,I,h,k,R_init,R_operator,max
             tabuListTwoOpt = tabuListTwoOpt[d*2+1:end]
         end
     end
+
+    runTimeAnalysis.time = CorrectTime.(startTime,runTimeAnalysis.time)
+    CSV.write("RunTimeAnalysis.csv", runTimeAnalysis)
 
     totalDistance,usedVehicles,totalWaitingTime = TotalEvaluation(bestVehiclePlan,bestCustomerPlan,instance)
 

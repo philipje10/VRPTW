@@ -99,6 +99,7 @@ end
 function RunOrOpt(h,I,C,s,maxLength,Q,vehiclePlan,customerPlan,bestVehiclePlan,bestCustomerPlan,customerTimes,depotTimes,customerDemand,distCustomers,distDepot,tabuList)
     bestEvaluation = TotalDistance(bestVehiclePlan,bestCustomerPlan,distDepot,distCustomers)
     results = Float64[]
+    df = DataFrame(time = Float32[],value = Float32[])
 
     i = 0
     while i < I
@@ -108,6 +109,7 @@ function RunOrOpt(h,I,C,s,maxLength,Q,vehiclePlan,customerPlan,bestVehiclePlan,b
 
         if evaluation < bestEvaluation
             println("Improvement: ",round(evaluation,digits = 4))
+            push!(df,[time_ns(),evaluation])
             i = 0
             bestEvaluation = evaluation
             bestVehiclePlan = vehiclePlan
@@ -121,5 +123,5 @@ function RunOrOpt(h,I,C,s,maxLength,Q,vehiclePlan,customerPlan,bestVehiclePlan,b
     println("No improvement: ",round(evaluation,digits = 4))
     trend = (results[end] - results[1])/length(results)
 
-    return vehiclePlan,customerPlan,bestVehiclePlan,bestCustomerPlan,tabuList,trend
+    return vehiclePlan,customerPlan,bestVehiclePlan,bestCustomerPlan,tabuList,trend,df
 end
