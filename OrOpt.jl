@@ -117,6 +117,7 @@ function RunOrOpt(h,I,C,s,maxLength,Q,vehiclePlan,customerPlan,bestVehiclePlan,b
         else
             i += 1
         end
+        push!(df,[time_ns(),bestEvaluation])
     end
     evaluation = TotalDistance(vehiclePlan,customerPlan,distDepot,distCustomers)
 

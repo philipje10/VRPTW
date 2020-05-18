@@ -26,6 +26,8 @@ function VRPTW(seed,instance,timeLimit,twoOptStart,d,I,h,k,R_init,R_operator,max
     customerPlan, vehiclePlan, unvisitedCustomers = InitialSolutionBuilder(instance,R_init)
     totalDistance,usedVehicles,totalWaitingTime = TotalEvaluation(vehiclePlan,customerPlan,instance)
 
+    PlotSolution(vehiclePlan,instance,"plot_initial_solution.png")
+
     println("")
     println("_________________________________________________")
     println("Initial solution built")
@@ -102,9 +104,10 @@ function VRPTW(seed,instance,timeLimit,twoOptStart,d,I,h,k,R_init,R_operator,max
             tabuListTwoOpt = tabuListTwoOpt[d*2+1:end]
         end
     end
-
+    fileName = string(string(seed),"-",string(split(split(instance,"/")[end],".")[1]),".csv")
     runTimeAnalysis.time = CorrectTime.(startTime,runTimeAnalysis.time)
-    CSV.write("RunTimeAnalysis.csv", runTimeAnalysis)
+    CSV.write(fileName, runTimeAnalysis)
+    PlotSolution(bestVehiclePlan,instance,"plot_best_solution.png")
 
     totalDistance,usedVehicles,totalWaitingTime = TotalEvaluation(bestVehiclePlan,bestCustomerPlan,instance)
 

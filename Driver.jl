@@ -4,4 +4,6 @@ Denmark (DTU). This course is offered in the spring of academic year 2019-2020."
 
 include("Algorithm.jl")
 
-bestVehiclePlan,bestCustomerPlan,bestDistance = VRPTW(12345,"data/C1_2_2.TXT",60,true,5,7,15,(5,30),1,18,2)
+instance = "data/C1_2_9.TXT"
+bestVehiclePlan,bestCustomerPlan,bestDistance = VRPTW(85673,instance,480,true,5,7,15,(5,30),1,18,2)
+PrintSolution(bestVehiclePlan,bestCustomerPlan,instance)

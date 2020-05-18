@@ -231,11 +231,11 @@ function RandomMove(locations,allowedSwitches,h,Q,s,customerPlan,vehiclePlan,cus
     end
 end
 
-function PlotSolution(vehiclePlan,instance)
+function PlotSolution(vehiclePlan,instance,imageName)
     format = 160
     scale = 10
     ~,~,C,depotCoordinates,~,customerCoordinates,~,~,~ = ReadInstance(instance)
-    Drawing(format*scale, format*scale)
+    Drawing(format*scale, format*scale,imageName)
     background("white")
     origin((format/2)*scale,(format/2)*scale)
 

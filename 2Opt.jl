@@ -100,7 +100,6 @@ function RunTwoOpt(h,s,C,Q,I,vehiclePlan,customerPlan,bestVehiclePlan,bestCustom
 
         if evaluation < bestEvaluation
             println("Improvement: ",round(evaluation,digits = 4))
-            push!(df,[time_ns(),evaluation])
             i = 0
             bestEvaluation = evaluation
             bestVehiclePlan = vehiclePlan
@@ -108,6 +107,7 @@ function RunTwoOpt(h,s,C,Q,I,vehiclePlan,customerPlan,bestVehiclePlan,bestCustom
         else
             i += 1
         end
+        push!(df,[time_ns(),bestEvaluation])
     end
 
     evaluation = TotalDistance(vehiclePlan,customerPlan,distDepot,distCustomers)
